@@ -1,4 +1,4 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://i.postimg.cc/MTPvGgP4/image-2025-11-26-231139677.png" width="400" alt=" Logo"></a></p>
 
 <p align="center">
 <a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
@@ -45,10 +45,10 @@ npm install
 composer install
 ```
 
-### Pasos Básicos
+### Setup Básico
 
 1. **Importar el archivo `.env`**:
-   O sino copiar el archivo .env.example desde powersheel (solo realizar si es que quieres empezar tu propio .env con credenciales propias)
+   O sino copiar el archivo .env.example desde powershell (solo realizar si es que quieres empezar tu propio .env con credenciales propias)
    ```bash
    cp .env.example .env
    ```
@@ -56,7 +56,7 @@ composer install
 2. **Carga la base de datos mysql en Wamp/XAMP, etc**:
 
 
-3. **Configurar base de datos**:
+3. **Configurar base de datos en .env (si es necesario)**:
    - Editar el archivo `.env` y configurar las variables de conexión a la base de datos:
    ```
    DB_CONNECTION=mysql
