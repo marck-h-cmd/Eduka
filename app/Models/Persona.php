@@ -9,13 +9,13 @@ class Persona extends Model
 {
     use HasFactory;
 
-    protected $table = 'estudiantes';
+    protected $table = 'personas';
 
-    protected $primaryKey = 'estudiante_id';
+    protected $primaryKey = 'id_persona';
 
     public $timestamps = false;
 
-    protected $fillable = ['dni', 'nombres', 'apellidos', 'fecha_nacimiento', 'genero', 'direccion', 'telefono', 'email', 'fecha_registro',	'estado', 'foto_url', 'observaciones'];
+    protected $fillable = ['dni', 'nombres', 'apellidos', 'fecha_nacimiento', 'genero', 'direccion', 'telefono', 'email',	'estado', 'foto_url'];
 
     public function representante()
     {
