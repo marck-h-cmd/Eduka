@@ -26,6 +26,8 @@ use App\Http\Controllers\PrincipalController;
 use App\Http\Controllers\ProductosController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UsuariosController;
+use App\Http\Controllers\PersonasController;
+use App\Http\Controllers\RolesController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/pagos/preferencia', [InfPagoController::class, 'crearPreferencia'])->name('pagos.crearPreferencia');
@@ -36,6 +38,12 @@ Route::get('/pagos/pending', [InfPagoController::class, 'pending'])->name('pagos
 
 // Validación manual de pagos desde frontend
 Route::post('/pagos/validar', [InfPagoController::class, 'validar'])->name('pagos.validar');
+
+// Verificación de DNI (disponible sin autenticación)
+Route::get('/personas/verificar-dni', [PersonasController::class, 'verificarDni'])->name('personas.verificarDni');
+
+// Verificación de Email (disponible sin autenticación)
+Route::get('/personas/verificar-email', [PersonasController::class, 'verificarEmail'])->name('personas.verificarEmail');
 
 Route::get('auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('google.login');
 Route::get('auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
@@ -310,6 +318,16 @@ Route::middleware(['auth'])->group(function () {
     // Usuarios
     Route::resource('/usuarios', UsuariosController::class);
     Route::get('/usuarios/{usuario}/confirmar', [UsuariosController::class, 'confirmar'])->name('usuarios.confirmar');
+
+
+    // Personas
+    Route::resource('/personas', PersonasController::class);
+
+    // Ruta temporal para testing sin auth
+    Route::get('/test-personas', [PersonasController::class, 'index'])->name('test.personas');
+
+    // Roles
+    Route::resource('/roles', RolesController::class);
 });
 Route::get('/', [UserController::class, 'showLogin'])->name('login');
 Route::get('/pass', [UserController::class, 'showLoginPassword'])->name('pass');
