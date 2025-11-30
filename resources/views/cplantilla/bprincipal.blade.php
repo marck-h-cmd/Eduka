@@ -504,13 +504,13 @@
                                         <span class="title mb-1">Operaciones Frecuentes</span>
                                         <span class="subtitle op-8">Registre adecuadamente los datos</span>
 
-                                        @if (auth()->user()->rol == 'Administrador')
+                                        @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Administrador'))
                                             <script>
                                                 document.getElementById('quick').classList.remove('d-none');
                                             </script>
                                         @endif
                                     </div>
-                                    @if (auth()->user()->rol == 'Administrador')
+                                    @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Administrador'))
                                         <div class="quick-actions-scroll scrollbar-outer">
                                             <div class="quick-actions-items">
                                                 <div class="row m-0">
@@ -664,7 +664,7 @@
        </div>
       </li>
     -->
-                        @if (auth()->user()->rol == 'Administrador')
+                        @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Administrador'))
                             <li class="nav-item active mt-3">
                                 <a data-toggle="collapse" href="#matriculas1"
                                     class="collapsed d-flex align-items-center justify-content-between btn-matricula"
@@ -750,7 +750,7 @@
                                 </div>
                             </li>
                         @endif
-                        @if (auth()->user()->rol == 'Profesor')
+                        @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Profesor'))
                             <li class="nav-item active mt-3">
                                 <a data-toggle="collapse" href="#asistencia"
                                     class="collapsed d-flex align-items-center justify-content-between"
@@ -787,21 +787,21 @@
 
                             <div class="collapse" id="notas">
                                 <ul class="nav nav-collapse">
-                                    @if (auth()->user()->rol == 'Administrador' || auth()->user()->rol == 'Profesor')
+                                    @if (auth()->user()->persona && (auth()->user()->persona->roles->contains('nombre', 'Administrador') || auth()->user()->persona->roles->contains('nombre', 'Profesor')))
                                         <li>
                                             <a href="{{ route('notas.inicio') }}">
                                                 <span class="sub-item">Registrar Notas</span>
                                             </a>
                                         </li>
                                     @endif
-                                    @if (auth()->user()->rol == 'Representante')
+                                    @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Representante'))
                                         <li>
                                             <a href="{{ route('notas.misEstudiantes') }}">
                                                 <span class="sub-item">Mis Estudiantes</span>
                                             </a>
                                         </li>
                                     @endif
-                                    @if (auth()->user()->rol == 'Administrador')
+                                    @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Administrador'))
                                         <li>
                                             <a href="{{ route('notas.consulta') }}">
                                                 <span class="sub-item">Ver Notas</span>
@@ -812,7 +812,7 @@
                             </div>
                         </li>
 
-                        @if (auth()->user()->rol == 'Representante')
+                        @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Representante'))
                             <li class="nav-item active mt-3">
                                 <a data-toggle="collapse" href="#asistencia-representante"
                                     class="collapsed d-flex align-items-center justify-content-between"
@@ -843,7 +843,7 @@
                                 transform: rotate(180deg);
                             }
                         </style>
-                        @if (auth()->user()->rol == 'Administrador')
+                        @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Administrador'))
                             <li class="nav-section">
                                 <span class="sidebar-mini-icon">
                                     <i class="fa fa-ellipsis-h"></i>
@@ -885,26 +885,7 @@
                                     </ul>
                                 </div>
                             </li>
-                                                        <li class="nav-item active mb-2">
-                                <a data-toggle="collapse" href="#modPersona" class="collapsed" aria-expanded="false"
-                                    style="background-color: #a9a97d !important; border-color: #ccc; color: #333;">
-                                    <i class="fas fa-chalkboard-teacher" style="color: #333;"></i>
-                                    <p style="margin-bottom: 0;">Módulo Personas</p>
-                                    <span class="caret"></span>
-                                </a>
 
-                                <div class="collapse" id="modPersona">
-
-                                    <ul class="nav nav-collapse">
-
-                                        <li>
-                                            <a href="{{ route('cursoasignatura.index') }}" class="evitar-recarga">
-                                                <span class="sub-item">Registrar Persona</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
                             <li class="nav-item active mb-2">
                                 <a data-toggle="collapse" href="#docente" class="collapsed" aria-expanded="false"
                                     style="background-color: #a9a97d !important; border-color: #ccc; color: #333;">
@@ -929,7 +910,7 @@
                                 <a data-toggle="collapse" href="#Estudiantil" class="collapsed"
                                     aria-expanded="false"
                                     style="background-color: #a9a97d !important; border-color: #ccc; color: #333;">
-                                    <i class="fas fa-grip-horizontal" style="color: white"></i>
+                                    <i class="fas fa-grip-horizontal" style="color: white;"></i>
                                     <p>Gestión Estudiantil</p>
                                     <span class="caret"></span>
                                 </a>
@@ -955,7 +936,7 @@
                             <li class="nav-item active mb-2">
                                 <a data-toggle="collapse" href="#Personal" class="collapsed" aria-expanded="false"
                                     style="background-color: #a9a97d !important; border-color: #ccc; color: #333;">
-                                    <i class="fas fa-grip-horizontal" style="color: white"></i>
+                                    <i class="fas fa-grip-horizontal" style="color: white;"></i>
                                     <p>Plana Docente</p>
                                     <span class="caret"></span>
                                 </a>
@@ -976,7 +957,7 @@
                             <li class="nav-item active mb-2">
                                 <a data-toggle="collapse" href="#Educativa" class="collapsed" aria-expanded="false"
                                     style="background-color: #a9a97d !important; border-color: #ccc; color: #333;">
-                                    <i class="fas fa-grip-horizontal" style="color: white"></i>
+                                    <i class="fas fa-grip-horizontal" style="color: white;"></i>
                                     <p>Estructura Educativa</p>
                                     <span class="caret"></span>
                                 </a>
@@ -1068,8 +1049,8 @@
                             <li class="nav-item active mb-2">
                                 <a data-toggle="collapse" href="#Usuarios" class="collapsed" aria-expanded="false"
                                     style="background-color: #a9a97d !important; border-color: #ccc; color: #333;">
-                                    <i class="fas fa-grip-horizontal" style="color: white"></i>
-                                    <p>Usuario</p>
+                                    <i class="fas fa-grip-horizontal" style="color: white;"></i>
+                                    <p>Gestión de Usuarios</p>
                                     <span class="caret"></span>
                                 </a>
 
@@ -1080,6 +1061,16 @@
                                         <li>
                                             <a href="{{ route('usuarios.index') }}">
                                                 <span class="sub-item">Detalle Usuario</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('personas.index') }}">
+                                                <span class="sub-item">Personas</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('roles.index') }}">
+                                                <span class="sub-item">Roles</span>
                                             </a>
                                         </li>
                                     </ul>

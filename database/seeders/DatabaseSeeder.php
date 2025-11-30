@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Cliente;
 use App\Models\InfEstudiante;
-use App\Models\User;
+use App\Models\Usuario;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -17,8 +17,12 @@ class DatabaseSeeder extends Seeder
     {
         //\App\Models\User::factory(1)->create();
         //Cliente::factory(20)->create();
-        InfEstudiante::factory(100)->create();
+        //InfEstudiante::factory(100)->create();
 
+        $this->call([
+            RolesSeeder::class,
+            PersonasSeeder::class,
+        ]);
     }
 
-}  
+}
