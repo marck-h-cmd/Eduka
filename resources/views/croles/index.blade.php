@@ -1,5 +1,5 @@
 @extends('cplantilla.bprincipal')
-@section('titulo', 'Registro y listado de usuarios')
+@section('titulo', 'Gestión de Roles')
 @section('contenidoplantilla')
 <style>
     .form-bordered { margin: 0; border: none; padding-top: 15px; padding-bottom: 15px; border-bottom: 1px dashed #eaedf1; }
@@ -30,7 +30,7 @@
                     data-toggle="collapse" data-target="#collapseExample0" aria-expanded="true"
                     aria-controls="collapseExample"
                     style="background: #0A8CB3 !important; font-weight: bold; color: white;">
-                    <i class="fas fa-users m-1"></i>&nbsp;Gestión de Usuarios
+                    <i class="fas fa-user-shield m-1"></i>&nbsp;Gestión de Roles
                     <div class="float-right"><i class="fas fa-chevron-down"></i></div>
                 </button>
                 <div class="card-body info">
@@ -40,10 +40,10 @@
                         </div>
                         <div class="p-2 flex-fill">
                             <p>
-                                En esta sección, podrás añadir nuevos usuarios y consultar la información de los que ya están registrados.
+                                En esta sección, podrás añadir nuevos roles y consultar la información de los que ya están registrados.
                             </p>
                             <p>
-                                Estimado Usuario: Asegúrate de revisar cuidadosamente los datos antes de guardarlos, ya que esta información será utilizada para la gestión de acceso y roles en el sistema.
+                                Estimado Usuario: Asegúrate de revisar cuidadosamente los datos antes de guardarlos, ya que los roles son utilizados para gestionar los permisos y acceso en el sistema.
                             </p>
                         </div>
                     </div>
@@ -52,14 +52,14 @@
                     <div class="card card-body rounded-0 border-0 pt-0 pb-2" style="background-color: #fcfffc !important">
                         <div class="row align-items-center">
                             <div class="col-md-6 mb-md-0 d-flex justify-content-start">
-                                <a href="{{ route('usuarios.create') }}" class="btn btn-primary w-100" id="nuevoRegistroBtn" style="background: #007bff !important; border: none;">
-                                    <i class="fa fa-plus mx-2"></i> Nuevo Usuario
+                                <a href="{{ route('roles.create') }}" class="btn btn-primary w-100" id="nuevoRegistroBtn" style="background: #007bff !important; border: none;">
+                                    <i class="fa fa-plus mx-2"></i> Nuevo Rol
                                 </a>
                             </div>
                             <div class="col-md-6 d-flex justify-content-md-end justify-content-start estilo-info">
                                 <form id="formBuscar" method="GET" class="w-100" style="max-width: 100%;">
                                     <div class="input-group">
-                                        <input name="buscarpor" id="inputBuscar" class="form-control mt-3" type="search" placeholder="Buscar usuario" aria-label="Search" autocomplete="off" style="border-color: #007bff;">
+                                        <input name="buscarpor" id="inputBuscar" class="form-control mt-3" type="search" placeholder="Buscar rol" aria-label="Search" autocomplete="off" style="border-color: #007bff;">
                                         <button class="btn btn-primary nuevo-boton" type="submit" style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; background: #007bff !important; border: none;">
                                             <i class="fas fa-search"></i>
                                         </button>
@@ -74,47 +74,35 @@
                                 <thead class="table-hover estilo-info">
                                     <tr>
                                         <th scope="col">ID</th>
-                                        <th scope="col">Usuario</th>
-                                        <th scope="col">Persona</th>
-                                        <th scope="col">Email</th>
-                                        <th scope="col">Roles</th>
+                                        <th scope="col">Nombre</th>
+                                        <th scope="col">Descripción</th>
+                                        <th scope="col">Personas Asignadas</th>
                                         <th scope="col">Estado</th>
                                         <th scope="col">Opciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($usuarios as $usuario)
+                                    @forelse($roles as $rol)
                                         <tr>
-                                            <td>{{ $usuario->id_usuario }}</td>
-                                            <td>{{ $usuario->username }}</td>
-                                            <td>{{ $usuario->persona->nombres }} {{ $usuario->persona->apellidos }}</td>
-                                            <td>{{ $usuario->email }}</td>
+                                            <td>{{ $rol->id_rol }}</td>
+                                            <td>{{ $rol->nombre }}</td>
+                                            <td>{{ $rol->descripcion ?: 'Sin descripción' }}</td>
+                                            <td>{{ $rol->personas()->count() }}</td>
                                             <td>
-                                                @if($usuario->persona->roles->count() > 0)
-                                                    @foreach($usuario->persona->roles as $rol)
-                                                        <span class="badge badge-info mr-1">{{ $rol->nombre }}</span>
-                                                    @endforeach
-                                                @else
-                                                    <span class="badge badge-secondary">Sin roles</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <span class="badge badge-{{ $usuario->estado == 'Activo' ? 'success' : 'danger' }}">
-                                                    {{ $usuario->estado }}
-                                                </span>
+                                                <span class="badge badge-success">Activo</span>
                                             </td>
                                             <td class="btn-action-group">
-                                                <a href="{{ route('usuarios.show', $usuario->id_usuario) }}" class="btn btn-link btn-sm p-0" title="Ver">
+                                                <a href="{{ route('roles.show', $rol->id_rol) }}" class="btn btn-link btn-sm p-0 btn-ver-rol" title="Ver">
                                                     <i class="fas fa-eye" style="color: #17a2b8; font-size: 1.2rem;"></i>
                                                 </a>
-                                                <a href="{{ route('usuarios.edit', $usuario->id_usuario) }}" class="btn btn-link btn-sm p-0 btn-editar-usuario" title="Editar">
+                                                <a href="{{ route('roles.edit', $rol->id_rol) }}" class="btn btn-link btn-sm p-0 btn-editar-rol" title="Editar">
                                                     <i class="fas fa-pen" style="color: #007bff; font-size: 1.2rem;"></i>
                                                 </a>
-                                                <button type="button" class="btn btn-link btn-sm p-0 btn-eliminar-usuario" title="Eliminar"
-                                                        onclick="confirmarEliminar({{ $usuario->id_usuario }}, '{{ $usuario->username }}')">
+                                                <button type="button" class="btn btn-link btn-sm p-0 btn-eliminar-rol" title="Eliminar"
+                                                        onclick="confirmarEliminar({{ $rol->id_rol }}, '{{ $rol->nombre }}')">
                                                     <i class="fas fa-times" style="color: #dc3545; font-size: 1.3rem;"></i>
                                                 </button>
-                                                <form id="delete-form-{{ $usuario->id_usuario }}" action="{{ route('usuarios.destroy', $usuario->id_usuario) }}" method="POST" class="d-none">
+                                                <form id="delete-form-{{ $rol->id_rol }}" action="{{ route('roles.destroy', $rol->id_rol) }}" method="POST" class="d-none">
                                                     @csrf
                                                     @method('DELETE')
                                                 </form>
@@ -122,14 +110,14 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="7" class="text-center">No hay usuarios registrados.</td>
+                                            <td colspan="6" class="text-center">No hay roles registrados.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
                             </table>
                         </div>
-                        <div id="tabla-usuarios">
-                            {{ $usuarios->links() }}
+                        <div id="tabla-roles">
+                            {{ $roles->links() }}
                         </div>
                     </div>
                 </div>
@@ -140,10 +128,10 @@
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // Función para confirmar eliminación con SweetAlert2 (global)
-    function confirmarEliminar(usuarioId, username) {
+    function confirmarEliminar(rolId, nombreRol) {
         Swal.fire({
             title: '¿Está seguro?',
-            text: `¿Desea cambiar el estado del usuario "${username}" a Inactivo?`,
+            text: `¿Desea cambiar el estado del rol "${nombreRol}" a Inactivo?`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc3545',
@@ -153,7 +141,7 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 // Enviar el formulario de eliminación
-                const form = document.getElementById(`delete-form-${usuarioId}`);
+                const form = document.getElementById(`delete-form-${rolId}`);
                 if (form) {
                     form.submit();
                 }
@@ -167,7 +155,7 @@
         if (loader) loader.style.display = 'none';
         if (contenido) contenido.style.opacity = '1';
 
-        // Loader para ir a create (Nuevo Usuario)
+        // Loader para ir a create (Nuevo Rol)
         const nuevoRegistroBtn = document.getElementById('nuevoRegistroBtn');
         if (nuevoRegistroBtn) {
             nuevoRegistroBtn.addEventListener('click', function(e) {
@@ -182,7 +170,7 @@
         }
 
         // Loader para ver
-        document.querySelectorAll('.btn-ver-usuario').forEach(function(btn) {
+        document.querySelectorAll('.btn-ver-rol').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 if (loader) {
@@ -195,7 +183,7 @@
         });
 
         // Loader para editar
-        document.querySelectorAll('.btn-editar-usuario').forEach(function(btn) {
+        document.querySelectorAll('.btn-editar-rol').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 if (loader) {
