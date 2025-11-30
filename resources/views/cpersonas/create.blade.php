@@ -230,6 +230,9 @@
                                                 <select class="form-control @error('email') is-invalid @enderror"
                                                     id="email_domain" name="email_domain" style="border-color: #007bff;">
                                                     <option value="">Seleccionar dominio</option>
+                                                    <option value="unitru.edu.pe"
+                                                        {{ (explode('@', old('email'))[1] ?? '') === 'unitru.edu.pe' ? 'selected' : '' }}>
+                                                        unitru.edu.pe</option>
                                                     <option value="gmail.com"
                                                         {{ (explode('@', old('email'))[1] ?? '') === 'gmail.com' ? 'selected' : '' }}>
                                                         gmail.com</option>
@@ -239,12 +242,6 @@
                                                     <option value="outlook.com"
                                                         {{ (explode('@', old('email'))[1] ?? '') === 'outlook.com' ? 'selected' : '' }}>
                                                         outlook.com</option>
-                                                    <option value="yahoo.com"
-                                                        {{ (explode('@', old('email'))[1] ?? '') === 'yahoo.com' ? 'selected' : '' }}>
-                                                        yahoo.com</option>
-                                                    <option value="live.com"
-                                                        {{ (explode('@', old('email'))[1] ?? '') === 'live.com' ? 'selected' : '' }}>
-                                                        live.com</option>
                                                 </select>
                                             </div>
                                             @error('email')
@@ -310,26 +307,30 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="estilo-info">Rol</label>
-                                    <small class="form-text text-muted mb-2">Selecciona el rol que tendrá esta persona en
-                                        el sistema (opcional)</small>
+                                    <label class="estilo-info">Roles</label>
+                                    <small class="form-text text-muted mb-2">
+                                        <strong>Selecciona los roles que tendrá esta persona en el sistema (opcional)</strong><br>
+                                        <i class="fas fa-info-circle text-info"></i> Al seleccionar el primer rol, se creará automáticamente una cuenta de usuario con credenciales que se enviarán por email.
+                                    </small>
                                     <div class="d-flex flex-wrap justify-content-center" style="gap: 1.5rem;">
                                         @foreach ($roles as $rol)
                                             <div class="role-card-container" style="flex: 0 0 auto;">
                                                 <div class="card role-card border"
                                                     style="cursor: pointer; transition: all 0.2s; border-radius: 12px; min-width: 160px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                                                     <div class="card-body text-center p-4">
-                                                        <input class="form-check-input d-none" type="radio"
-                                                            name="rol" value="{{ $rol->id_rol }}"
+                                                        <input class="form-check-input d-none" type="checkbox"
+                                                            name="roles[]" value="{{ $rol->id_rol }}"
                                                             id="rol_{{ $rol->id_rol }}"
-                                                            {{ old('rol') == $rol->id_rol ? 'checked' : '' }}>
+                                                            {{ in_array($rol->id_rol, old('roles', [])) ? 'checked' : '' }}>
                                                         <div class="role-icon mb-3">
                                                             @if($rol->nombre == 'Administrador')
                                                                 <i class="fas fa-crown fa-3x text-warning"></i>
                                                             @elseif($rol->nombre == 'Docente')
                                                                 <i class="fas fa-chalkboard-teacher fa-3x text-info"></i>
                                                             @elseif($rol->nombre == 'Estudiante')
-                                                                <i class="fas fa-graduation-cap fa-3x text-success"></i>
+                                                                <i class="fas fa-user-graduate fa-3x text-success"></i>
+                                                            @elseif($rol->nombre == 'Secretaria')
+                                                                <i class="fas fa-user-tie fa-3x text-secondary"></i>
                                                             @elseif($rol->nombre == 'Representante')
                                                                 <i class="fas fa-user-friends fa-3x text-primary"></i>
                                                             @else
@@ -351,11 +352,16 @@
                                             </div>
                                         @endforeach
                                     </div>
-                                    @error('rol')
+                                    @error('roles')
                                         <span class="invalid-feedback d-block" role="alert">
                                             <strong>{{ $message }}</strong>
-                                        </span>
-                                    @enderror
+                                                </span>
+                                            @enderror
+                                            @error('roles.*')
+                                                <span class="invalid-feedback d-block" role="alert">
+                                                    <strong>{{ $message }}</strong>
+                                                </span>
+                                            @enderror
                                 </div>
 
                                 <div class="row mt-4">
@@ -677,42 +683,35 @@
                 });
             @endif
 
-            // Función para manejar la selección de roles con cards (radio buttons)
+            // Función para manejar la selección de roles con cards (checkboxes)
             $('.role-card').on('click', function() {
-                var radio = $(this).find('input[type="radio"]');
+                var checkbox = $(this).find('input[type="checkbox"]');
                 var checkmark = $(this).find('.role-checkmark i');
                 var card = $(this);
 
-                // Si ya está seleccionado, deseleccionarlo (permitir ninguno)
-                if (radio.prop('checked')) {
-                    radio.prop('checked', false);
+                // Toggle del checkbox
+                checkbox.prop('checked', !checkbox.prop('checked'));
+
+                // Actualizar visualización
+                if (checkbox.prop('checked')) {
+                    card.addClass('border-success').css('background-color', '#f8fff8');
+                    checkmark.show();
+                    console.log('Rol seleccionado:', checkbox.val());
+                } else {
                     card.removeClass('border-success').css('background-color', '');
                     checkmark.hide();
-                    console.log('Rol deseleccionado');
-                    return;
+                    console.log('Rol deseleccionado:', checkbox.val());
                 }
-
-                // Desmarcar todos los roles primero
-                $('input[type="radio"][name="rol"]').prop('checked', false);
-                $('.role-card').removeClass('border-success').css('background-color', '');
-                $('.role-checkmark i').hide();
-
-                // Marcar el rol seleccionado
-                radio.prop('checked', true);
-                card.addClass('border-success').css('background-color', '#f8fff8');
-                checkmark.show();
-
-                console.log('Rol seleccionado:', radio.val());
             });
 
             // Inicializar visualización de roles seleccionados al cargar la página
             function inicializarRolesSeleccionados() {
-                $('input[type="radio"][name="rol"]').each(function() {
-                    var radio = $(this);
-                    var card = radio.closest('.role-card');
+                $('input[type="checkbox"][name="roles[]"]').each(function() {
+                    var checkbox = $(this);
+                    var card = checkbox.closest('.role-card');
                     var checkmark = card.find('.role-checkmark i');
 
-                    if (radio.prop('checked')) {
+                    if (checkbox.prop('checked')) {
                         card.addClass('border-success').css('background-color', '#f8fff8');
                         checkmark.show();
                     } else {

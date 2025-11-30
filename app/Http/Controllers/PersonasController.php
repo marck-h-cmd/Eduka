@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Persona;
 use App\Models\Rol;
+use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -51,7 +52,8 @@ class PersonasController extends Controller
             'genero' => 'nullable|in:M,F,Otro',
             'direccion' => 'nullable|string|max:255',
             'fecha_nacimiento' => 'nullable|date|before:today',
-            'rol' => 'nullable|exists:roles,id_rol',
+            'roles' => 'nullable|array',
+            'roles.*' => 'exists:roles,id_rol',
         ], [
             'nombres.required' => 'El campo nombres es obligatorio.',
             'nombres.regex' => 'El campo nombres solo puede contener letras y espacios.',
@@ -85,11 +87,36 @@ class PersonasController extends Controller
             'nombres', 'apellidos', 'dni', 'telefono', 'email', 'genero', 'direccion', 'fecha_nacimiento'
         ])->merge(['estado' => 'Activo'])->toArray());
 
-        if ($request->has('rol') && $request->rol) {
-            $persona->roles()->attach($request->rol);
-            $mensaje = 'Persona creada exitosamente.';
+        if ($request->has('roles') && is_array($request->roles) && !empty($request->roles)) {
+            $rolesAsignados = [];
+
+            // VERIFICAR Y CREAR USUARIO UNA SOLA VEZ ANTES DE PROCESAR ROLES
+            $usuarioCreado = false;
+            $credencialesUsuario = null;
+            if (!$persona->usuario) {
+                $resultadoCreacion = Usuario::crearUsuarioAutomatico($persona);
+                $credencialesUsuario = $resultadoCreacion['credenciales'];
+                $usuarioCreado = true;
+            }
+
+            foreach ($request->roles as $rolId) {
+                $rol = Rol::find($rolId);
+
+                // Usar syncWithoutDetaching para asignación segura
+                $persona->roles()->syncWithoutDetaching([$rolId => ['estado' => 'Activo']]);
+                $rolesAsignados[] = $rol->nombre;
+            }
+
+            if (!empty($rolesAsignados)) {
+                $mensaje = 'Persona creada exitosamente con roles asignados: ' . implode(', ', $rolesAsignados) . '.';
+                if ($usuarioCreado && $credencialesUsuario) {
+                    $mensaje .= ' Credenciales creadas: Usuario: ' . $credencialesUsuario['username'] . ', Email: ' . $credencialesUsuario['email'] . '. Las credenciales han sido enviadas por email.';
+                }
+            } else {
+                $mensaje = 'Persona creada exitosamente.';
+            }
         } else {
-            $mensaje = 'Persona creada exitosamente. Se ha creado una persona sin rol específico.';
+            $mensaje = 'Persona creada exitosamente. Se ha creado una persona sin roles específicos.';
         }
 
         return redirect()->route('personas.index')
@@ -141,7 +168,8 @@ class PersonasController extends Controller
             'genero' => 'nullable|in:M,F,Otro',
             'direccion' => 'nullable|string|max:255',
             'fecha_nacimiento' => 'nullable|date|before:today',
-            'rol' => 'nullable|exists:roles,id_rol',
+            'roles' => 'nullable|array',
+            'roles.*' => 'exists:roles,id_rol',
         ], [
             'nombres.required' => 'El campo nombres es obligatorio.',
             'nombres.regex' => 'El campo nombres solo puede contener letras y espacios.',
@@ -163,7 +191,7 @@ class PersonasController extends Controller
             'direccion.max' => 'El campo dirección no puede tener más de 255 caracteres.',
             'fecha_nacimiento.date' => 'El campo fecha de nacimiento debe ser una fecha válida.',
             'fecha_nacimiento.before' => 'La fecha de nacimiento no puede ser futura.',
-            'rol.exists' => 'El rol seleccionado no es válido.',
+            'roles.*.exists' => 'Uno de los roles seleccionados no es válido.',
         ]);
 
         if ($validator->fails()) {
@@ -176,34 +204,102 @@ class PersonasController extends Controller
             'nombres', 'apellidos', 'dni', 'telefono', 'email', 'genero', 'direccion', 'fecha_nacimiento'
         ])->toArray());
 
-        if ($request->has('rol') && $request->rol) {
-            $persona->roles()->sync([$request->rol]);
+        // Gestionar cambios de roles de forma coherente
+        $cambiosRealizados = [];
+
+        if ($request->has('roles') && is_array($request->roles) && !empty($request->roles)) {
+            // Obtener roles actuales activos de la persona
+            $rolesActuales = $persona->roles()->where('persona_roles.estado', 'Activo')
+                ->pluck('roles.id_rol')->toArray();
+
+            $rolesNuevos = $request->roles;
+            $rolesAgregados = array_diff($rolesNuevos, $rolesActuales);
+            $rolesRemovidos = array_diff($rolesActuales, $rolesNuevos);
+
+            // VERIFICAR Y CREAR USUARIO UNA SOLA VEZ ANTES DE PROCESAR ROLES
+            $usuarioCreado = false;
+            $credencialesUsuario = null;
+            if (!empty($rolesAgregados) && !$persona->usuario) {
+                $resultadoCreacion = Usuario::crearUsuarioAutomatico($persona);
+                $credencialesUsuario = $resultadoCreacion['credenciales'];
+                $usuarioCreado = true;
+            }
+
+            // Agregar nuevos roles
+            foreach ($rolesAgregados as $rolId) {
+                $rol = Rol::find($rolId);
+                $persona->roles()->syncWithoutDetaching([$rolId => ['estado' => 'Activo']]);
+                $cambiosRealizados[] = "Rol agregado: {$rol->nombre}";
+            }
+
+            // Agregar mensaje de usuario creado si fue necesario
+            if ($usuarioCreado && $credencialesUsuario) {
+                $cambiosRealizados[] = "Usuario creado: {$credencialesUsuario['username']} ({$credencialesUsuario['email']})";
+            }
+
+            // Remover roles no seleccionados
+            foreach ($rolesRemovidos as $rolId) {
+                $rol = Rol::find($rolId);
+                $persona->roles()->updateExistingPivot($rolId, ['estado' => 'Inactivo']);
+                $cambiosRealizados[] = "Rol removido: {$rol->nombre}";
+            }
+
+            // Si no hay cambios pero hay roles, verificar si necesitan credenciales
+            if (empty($rolesAgregados) && empty($rolesRemovidos) && !empty($rolesNuevos)) {
+                $cambiosRealizados[] = "Roles confirmados sin cambios";
+            }
         } else {
-            $persona->roles()->detach();
+            // Sin roles - desactivar todas las asignaciones de roles activas
+            $rolesDesactivados = $persona->roles()->where('persona_roles.estado', 'Activo')
+                ->update(['persona_roles.estado' => 'Inactivo']);
+            if ($rolesDesactivados > 0) {
+                $cambiosRealizados[] = "Se desactivaron {$rolesDesactivados} asignación(es) de rol(es)";
+            }
+        }
+
+        // Construir mensaje informativo
+        $mensaje = 'Persona actualizada exitosamente.';
+        if (!empty($cambiosRealizados)) {
+            $mensaje .= ' Cambios realizados: ' . implode(', ', $cambiosRealizados) . '.';
         }
 
         return redirect()->route('personas.index')
-            ->with('success', 'Persona actualizada exitosamente.');
+            ->with('success', $mensaje);
     }
 
     /**
      * Remove the specified resource from storage.
+     * Cambia el estado a "Inactivo" manteniendo integridad referencial
      */
     public function destroy(Persona $persona)
     {
-        // Cambiar el estado a "Inactivo" en lugar de eliminar
-        $persona->update(['estado' => 'Inactivo']);
-
-        // Si la persona tiene usuarios asociados, también cambiar su estado a "Inactivo"
-        if ($persona->usuarios()->count() > 0) {
-            $persona->usuarios()->update(['estado' => 'Inactivo']);
+        // Verificar si la persona ya está inactiva
+        if ($persona->estado === 'Inactivo') {
+            return redirect()->route('personas.index')
+                ->with('warning', 'La persona ya se encuentra inactiva.');
         }
 
-        // Cambiar el estado de las asignaciones de roles a "Inactivo"
-        $persona->roles()->update(['persona_roles.estado' => 'Inactivo']);
+        // Cambiar el estado de la persona a "Inactivo"
+        $persona->update(['estado' => 'Inactivo']);
+
+        // Desactivar todos los usuarios asociados a esta persona
+        $usuariosDesactivados = $persona->usuarios()->where('estado', 'Activo')->update(['estado' => 'Inactivo']);
+
+        // Desactivar todas las asignaciones de roles activas de esta persona
+        $rolesDesactivados = $persona->roles()->where('persona_roles.estado', 'Activo')
+            ->update(['persona_roles.estado' => 'Inactivo']);
+
+        // Construir mensaje informativo sobre qué se desactivó
+        $mensaje = 'Persona dada de baja exitosamente.';
+        if ($usuariosDesactivados > 0) {
+            $mensaje .= " Se desactivaron {$usuariosDesactivados} usuario(s) asociado(s).";
+        }
+        if ($rolesDesactivados > 0) {
+            $mensaje .= " Se desactivaron {$rolesDesactivados} asignación(es) de rol(es).";
+        }
 
         return redirect()->route('personas.index')
-            ->with('success', 'Persona eliminada exitosamente.');
+            ->with('success', $mensaje);
     }
 
     /**

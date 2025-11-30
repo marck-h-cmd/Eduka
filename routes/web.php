@@ -28,6 +28,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\UsuariosController;
 use App\Http\Controllers\PersonasController;
 use App\Http\Controllers\RolesController;
+use App\Http\Controllers\AsignacionRolesController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/pagos/preferencia', [InfPagoController::class, 'crearPreferencia'])->name('pagos.crearPreferencia');
@@ -315,19 +316,27 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/api/anio/{anio}', [App\Http\Controllers\FeriadoController::class, 'getByAnio'])->name('api.anio');
     });
 
-    // Usuarios
+    // Usuarios - Solo para Administradores y Secretarias
     Route::resource('/usuarios', UsuariosController::class);
     Route::get('/usuarios/{usuario}/confirmar', [UsuariosController::class, 'confirmar'])->name('usuarios.confirmar');
 
-
-    // Personas
+    // Personas - Solo para Administradores y Secretarias
     Route::resource('/personas', PersonasController::class);
-
     // Ruta temporal para testing sin auth
     Route::get('/test-personas', [PersonasController::class, 'index'])->name('test.personas');
 
-    // Roles
+    // Roles - Solo para Administradores
     Route::resource('/roles', RolesController::class);
+
+    // Asignación de Roles - Solo para Administradores y Secretarias
+    Route::prefix('asignacion-roles')->name('asignacion-roles.')->group(function () {
+        Route::get('/', [AsignacionRolesController::class, 'index'])->name('index');
+        Route::post('/asignar', [AsignacionRolesController::class, 'asignarRoles'])->name('asignar');
+        Route::get('/resultados', [AsignacionRolesController::class, 'resultados'])->name('resultados');
+    });
+
+    // Cambio de rol activo para usuarios con múltiples roles
+    Route::post('/cambiar-rol-activo', [UsuariosController::class, 'cambiarRolActivo'])->name('cambiar.rol.activo');
 });
 Route::get('/', [UserController::class, 'showLogin'])->name('login');
 Route::get('/pass', [UserController::class, 'showLoginPassword'])->name('pass');
