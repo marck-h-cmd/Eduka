@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\Cliente;
 use App\Models\InfDocente;
 use App\Models\InfEstudiante;
-use App\Models\User;
+use App\Models\Usuario;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -22,4 +22,4 @@ class DocenteSeeder extends Seeder
 
     }
 
-}  
+}
