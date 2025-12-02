@@ -45,7 +45,13 @@ class Persona extends Model
 
     public function roles()
     {
-        return $this->belongsToMany(Rol::class, 'persona_roles', 'id_persona', 'id_rol');
+        return $this->belongsToMany(Rol::class, 'persona_roles', 'id_persona', 'id_rol')
+                    ->wherePivot('estado', 'Activo');
+    }
+
+    public function todosLosRoles()
+    {
+        return $this->belongsToMany(Rol::class, 'persona_roles', 'id_persona', 'id_rol')->withPivot('estado');
     }
 
     public function usuario()

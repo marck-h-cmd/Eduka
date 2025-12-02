@@ -12,8 +12,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- 🔹 jQuery primero -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <!--PARA EL DISEÑO DE TABLER-->
 
@@ -504,7 +502,7 @@
                                         <span class="title mb-1">Operaciones Frecuentes</span>
                                         <span class="subtitle op-8">Registre adecuadamente los datos</span>
 
-                                        @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Administrador'))
+                                        @if (auth()->user()->persona && auth()->user()->getCurrentRole()->nombre === 'Administrador')
                                             <script>
                                                 document.getElementById('quick').classList.remove('d-none');
                                             </script>
@@ -564,6 +562,22 @@
                             </div>
 
                         </li>
+                        @if(auth()->user()->hasMultipleRoles())
+                            <li class="nav-item dropdown hidden-caret">
+                                <div class="role-selector-container" style="display: flex; align-items: center; margin-right: 15px; background: rgba(255,255,255,0.1); border-radius: 20px; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.2); position: relative; transition: all 0.3s ease; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                                    <i class="fas fa-user-tag text-white mr-2" style="font-size: 14px; opacity: 0.8;"></i>
+                                    <small class="text-white mr-3" style="font-size: 12px; font-weight: 600; opacity: 0.9;">Rol:</small>
+                                    <select id="role-selector" class="custom-role-select" style="background: transparent; border: none; color: white; font-size: 12px; font-weight: 500; cursor: pointer; outline: none; appearance: none; -webkit-appearance: none; -moz-appearance: none; padding-right: 20px; min-width: 120px; position: relative; z-index: 2;">
+                                        @foreach(auth()->user()->getActiveRoles() as $role)
+                                            <option value="{{ $role->id_rol }}" {{ auth()->user()->getCurrentRole()->id_rol == $role->id_rol ? 'selected' : '' }} data-icon="{{ $role->nombre === 'Administrador' ? 'fas fa-crown' : ($role->nombre === 'Profesor' ? 'fas fa-chalkboard-teacher' : ($role->nombre === 'Representante' ? 'fas fa-user-tie' : ($role->nombre === 'Estudiante' ? 'fas fa-graduation-cap' : 'fas fa-user')))}}" data-color="{{ $role->nombre === 'Administrador' ? '#e91e63' : ($role->nombre === 'Profesor' ? '#2196f3' : ($role->nombre === 'Representante' ? '#ff9800' : ($role->nombre === 'Estudiante' ? '#4caf50' : '#9c27b0')))}}">
+                                                {{ $role->nombre }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <i class="fas fa-chevron-down text-white" style="font-size: 10px; position: absolute; right: 12px; pointer-events: none; opacity: 0.7; transition: transform 0.3s ease; z-index: 1;"></i>
+                                </div>
+                            </li>
+                        @endif
                         <li class="nav-item dropdown hidden-caret">
                             <a class="dropdown-toggle profile-pic" data-toggle="dropdown" href="#"
                                 aria-expanded="false">
@@ -583,6 +597,7 @@
                                                 <h4>{{ auth()->user()->nombres }}<br>{{ auth()->user()->apellidos }}
                                                 </h4>
                                                 <p class="text-muted">{{ auth()->user()->email }}</p>
+                                                <small class="text-muted">{{ auth()->user()->getCurrentRole()->nombre }}</small>
                                                 <a href="#" class="btn btn-xs btn-secondary btn-sm"
                                                     style="background-color: #e91e63 !important; border: none">Ver
                                                     Perfil</a>
@@ -627,7 +642,7 @@
 
                                 <span>
                                     {{ auth()->user()->nombres }}
-                                    <span class="user-level">{{ auth()->user()->rol }}</span>
+                                    <span class="user-level">{{ auth()->user()->getCurrentRole()->nombre }}</span>
 
                                 </span>
                             </a>
@@ -750,7 +765,7 @@
                                 </div>
                             </li>
                         @endif
-                        @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Profesor'))
+                        @if (auth()->user()->persona && auth()->user()->getCurrentRole()->nombre === 'Profesor')
                             <li class="nav-item active mt-3">
                                 <a data-toggle="collapse" href="#asistencia"
                                     class="collapsed d-flex align-items-center justify-content-between"
@@ -787,21 +802,21 @@
 
                             <div class="collapse" id="notas">
                                 <ul class="nav nav-collapse">
-                                    @if (auth()->user()->persona && (auth()->user()->persona->roles->contains('nombre', 'Administrador') || auth()->user()->persona->roles->contains('nombre', 'Profesor')))
+                                    @if (auth()->user()->persona && (auth()->user()->getCurrentRole()->nombre === 'Administrador' || auth()->user()->getCurrentRole()->nombre === 'Profesor'))
                                         <li>
                                             <a href="{{ route('notas.inicio') }}">
                                                 <span class="sub-item">Registrar Notas</span>
                                             </a>
                                         </li>
                                     @endif
-                                    @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Representante'))
+                                    @if (auth()->user()->persona && auth()->user()->getCurrentRole()->nombre === 'Representante')
                                         <li>
                                             <a href="{{ route('notas.misEstudiantes') }}">
                                                 <span class="sub-item">Mis Estudiantes</span>
                                             </a>
                                         </li>
                                     @endif
-                                    @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Administrador'))
+                                    @if (auth()->user()->persona && auth()->user()->getCurrentRole()->nombre === 'Administrador')
                                         <li>
                                             <a href="{{ route('notas.consulta') }}">
                                                 <span class="sub-item">Ver Notas</span>
@@ -812,7 +827,7 @@
                             </div>
                         </li>
 
-                        @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Representante'))
+                        @if (auth()->user()->persona && auth()->user()->getCurrentRole()->nombre === 'Representante')
                             <li class="nav-item active mt-3">
                                 <a data-toggle="collapse" href="#asistencia-representante"
                                     class="collapsed d-flex align-items-center justify-content-between"
@@ -843,7 +858,7 @@
                                 transform: rotate(180deg);
                             }
                         </style>
-                        @if (auth()->user()->persona && auth()->user()->persona->roles->contains('nombre', 'Administrador'))
+                        @if (auth()->user()->persona && auth()->user()->getCurrentRole()->nombre === 'Administrador')
                             <li class="nav-section">
                                 <span class="sidebar-mini-icon">
                                     <i class="fa fa-ellipsis-h"></i>
@@ -1071,6 +1086,11 @@
                                         <li>
                                             <a href="{{ route('roles.index') }}">
                                                 <span class="sub-item">Roles</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('asignacion-roles.index') }}">
+                                                <span class="sub-item">Asignación de Roles</span>
                                             </a>
                                         </li>
                                     </ul>
@@ -1340,6 +1360,68 @@
 
     <style>
         /* ========================
+     ESTILOS DEL SELECTOR DE ROLES
+  =========================*/
+        .role-selector-container {
+            position: relative;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .role-selector-container:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .role-selector-container .custom-role-select {
+            font-family: "Quicksand", sans-serif;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .role-selector-container .custom-role-select:focus {
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+            outline: none;
+        }
+
+        .role-selector-container i.fa-chevron-down {
+            transition: transform 0.3s ease;
+        }
+
+        .role-selector-container:hover i.fa-chevron-down {
+            transform: translateY(1px);
+        }
+
+        /* Estilos para las opciones del select nativo */
+        .role-selector-container select option {
+            color: #333 !important;
+            background: white !important;
+        }
+
+        /* Estilos más específicos para asegurar visibilidad */
+        select#role-selector option {
+            color: #333 !important;
+            background-color: white !important;
+            background: white !important;
+        }
+
+        /* Forzar estilos en todos los estados */
+        select#role-selector option,
+        select#role-selector option:hover,
+        select#role-selector option:focus,
+        select#role-selector option:active,
+        select#role-selector option:checked {
+            color: #333 !important;
+            background-color: white !important;
+            background: white !important;
+        }
+
+
+
+
+
+        /* ========================
      PANTALLA DE BIENVENIDA
   =========================*/
         #welcomeSplash {
@@ -1475,6 +1557,85 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            // ✅ Función para cambiar rol activo
+            const roleSelector = document.getElementById('role-selector');
+            if (roleSelector) {
+                roleSelector.addEventListener('change', function() {
+                    const selectedRoleId = this.value;
+
+                    // Enviar petición AJAX para cambiar rol
+                    fetch('/cambiar-rol-activo', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            role_id: selectedRoleId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Mostrar notificación de éxito
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Rol cambiado',
+                                text: 'Ahora estás trabajando como: ' + data.current_role,
+                                toast: true,
+                                position: 'top-end',
+                                showConfirmButton: false,
+                                timer: 2000,
+                                timerProgressBar: true
+                            });
+
+                            // Redirigir a la página de inicio para aplicar cambios de permisos
+                            setTimeout(() => {
+                                window.location.href = '{{ route("rutarrr1") }}';
+                            }, 2000);
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: data.message || 'No se pudo cambiar el rol'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Ocurrió un error al cambiar el rol'
+                        });
+                    });
+                });
+
+                // ✅ Mejorar interacción del selector de roles
+                const roleContainer = document.querySelector('.role-selector-container');
+                const chevronIcon = roleContainer.querySelector('.fa-chevron-down');
+
+                roleSelector.addEventListener('focus', function() {
+                    chevronIcon.style.transform = 'rotate(180deg) translateY(1px)';
+                });
+
+                roleSelector.addEventListener('blur', function() {
+                    chevronIcon.style.transform = 'rotate(0deg) translateY(0px)';
+                });
+
+                roleSelector.addEventListener('mouseenter', function() {
+                    chevronIcon.style.transform = 'translateY(1px)';
+                });
+
+                roleSelector.addEventListener('mouseleave', function() {
+                    if (!roleSelector.matches(':focus')) {
+                        chevronIcon.style.transform = 'translateY(0px)';
+                    }
+                });
+
+
+            }
+
             // ✅ Revisamos si ya se mostró el tour antes
             if (!localStorage.getItem("tourCompletado")) {
                 const intro = introJs();

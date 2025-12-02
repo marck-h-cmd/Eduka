@@ -7,16 +7,16 @@
 
     <h2 style="text-align: center; color: #2b2b2b;">Bienvenido a Eduka</h2>
 
-    <p>Estimado/a <strong>{{ $nombre }}</strong>,</p>
+    <p>Estimado administrador <strong>{{ $nombre }}</strong>,</p>
 
-    <p>Su acceso al sistema ha sido creado exitosamente. A continuación encontrará sus credenciales de ingreso:</p>
+    <p>Su acceso completo al sistema Eduka ha sido creado exitosamente. A continuación encontrará sus credenciales de ingreso:</p>
 
     <ul style="font-size: 15px; line-height: 1.6;">
         <li><strong>📧 Usuario:</strong> {{ $correo }}</li>
         <li><strong>🔐 Contraseña temporal:</strong> {{ $password }}</li>
     </ul>
 
-    <p>Por motivos de seguridad, le recomendamos cambiar su contraseña al ingresar al sistema por primera vez.</p>
+    <p><strong>IMPORTANTE:</strong> Como administrador del sistema, tiene acceso completo a todas las funcionalidades. Por motivos de seguridad, le recomendamos cambiar su contraseña al ingresar al sistema por primera vez.</p>
 
     <p style="margin-top: 30px;">Si tiene algún inconveniente, puede contactarnos directamente.</p>
 
