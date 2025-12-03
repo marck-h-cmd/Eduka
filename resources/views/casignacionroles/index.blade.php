@@ -22,8 +22,39 @@
     .role-checkbox { margin: 5px 0; }
     .select-all-container { background-color: #e3f2fd; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
     .role-tag { position: relative !important; }
-    .remove-role-btn { position: absolute !important; top: -5px !important; right: -5px !important; z-index: 10; }
+    .role-assigned-container { position: relative !important; display: inline-block; }
+    .remove-role-overlay {
+        position: absolute !important;
+        top: -3px !important;
+        right: -3px !important;
+        width: 18px !important;
+        height: 18px !important;
+        background: #dc3545 !important;
+        border-radius: 50% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        border: 1px solid #fff !important;
+        z-index: 5 !important;
+    }
+    .remove-role-overlay i {
+        font-size: 10px !important;
+        color: #fff !important;
+        line-height: 1 !important;
+    }
+    .remove-role-overlay:hover {
+        background: #c82333 !important;
+    }
+    .role-assigned-container .badge {
+        border-radius: 3px !important; /* Cuadrado en lugar de redondeado */
+    }
     #loaderPrincipal[style*="display: flex"] { display: flex !important; justify-content: center; align-items: center; position: absolute !important; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; z-index: 2000; }
+    .modal-loader { position: absolute !important; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.9); display: flex; justify-content: center; align-items: center; z-index: 1050; }
+    .modal-loader .spinner-border { width: 3rem; height: 3rem; }
+    .btn-loading { position: relative; color: transparent !important; }
+    .btn-loading::after { content: ""; position: absolute; width: 16px; height: 16px; top: 50%; left: 50%; margin-left: -8px; margin-top: -8px; border: 2px solid #ffffff; border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 <div class="container-fluid" id="contenido-principal" style="position: relative;">
     @include('ccomponentes.loader', ['id' => 'loaderPrincipal'])
@@ -47,137 +78,199 @@
                                 En esta sección, podrás asignar roles a las personas registradas en el sistema.
                             </p>
                             <p>
-                                Estimado Usuario: Selecciona las personas a las que deseas asignar roles, elige los roles correspondientes y confirma la asignación. Al asignar el primer rol a una persona, se creará automáticamente una cuenta de usuario.
+                                Estimado Usuario: Haz clic en el botón "+" de cada rol para asignarlo individualmente a las personas. Al asignar el primer rol a una persona, se creará automáticamente una cuenta de usuario.
                             </p>
                         </div>
                     </div>
                 </div>
                 <div class="collapse show" id="collapseExample0">
                     <div class="card card-body rounded-0 border-0 pt-0 pb-2" style="background-color: #fcfffc !important">
-                        <form id="roleAssignmentForm" method="POST" action="{{ route('asignacion-roles.asignar') }}">
-                            @csrf
-                            <div class="row align-items-center">
-                                <div class="col-md-6 mb-md-0 d-flex justify-content-start">
-                                    <button type="submit" class="btn btn-success" id="assignRolesBtn" disabled>
-                                        <i class="fa fa-user-tag mx-2"></i> Asignar Roles
-                                    </button>
-                                </div>
-                                <div class="col-md-6 d-flex justify-content-md-end justify-content-start estilo-info">
-                                    <form id="formBuscar" method="GET" class="w-100" style="max-width: 100%;">
-                                        <div class="input-group">
-                                            <input name="buscarpor" id="inputBuscar" class="form-control mt-3" type="search" placeholder="Buscar persona" aria-label="Search" autocomplete="off" style="border-color: #007bff;" value="{{ $buscarpor }}">
-                                            <button class="btn btn-primary nuevo-boton" type="submit" style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; background: #007bff !important; border: none;">
-                                                <i class="fas fa-search"></i>
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
+                        {{-- Formulario eliminado - ahora solo asignación individual --}}
 
+                            {{-- Advanced AJAX Filters and Search Bar --}}
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-body p-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                                            <div class="row align-items-end">
+                                                <!-- Search Type Selector -->
+                                                <div class="col-md-2 mb-3 mb-md-0">
+                                                    <label for="tipoBusqueda" class="form-label fw-bold text-primary">
+                                                        <i class="fas fa-filter me-1"></i>Buscar por
+                                                    </label>
+                                                    <select name="tipo_busqueda" id="tipoBusqueda" class="form-control" style="border-color: #007bff;">
+                                                        <option value="nombre" {{ request('tipo_busqueda', 'nombre') == 'nombre' ? 'selected' : '' }}>Nombre</option>
+                                                        <option value="dni" {{ request('tipo_busqueda') == 'dni' ? 'selected' : '' }}>DNI</option>
+                                                        <option value="email" {{ request('tipo_busqueda') == 'email' ? 'selected' : '' }}>Email</option>
+                                                    </select>
+                                                </div>
 
+                                                <!-- Search Input -->
+                                                <div class="col-md-4 mb-3 mb-md-0">
+                                                    <label for="inputBuscar" class="form-label fw-bold text-primary">
+                                                        <i class="fas fa-search me-1"></i>Buscar Persona
+                                                    </label>
+                                                    <input name="buscarpor" id="inputBuscar" class="form-control"
+                                                           type="search" placeholder="Ingrese el término de búsqueda..."
+                                                           aria-label="Search" autocomplete="off"
+                                                           style="border-color: #007bff;" value="{{ $buscarpor }}">
+                                                </div>
 
-                            <div id="alerts-container"></div>
-                            <div class="row form-bordered align-items-center"></div>
-                            <div class="table-responsive mt-2">
-                                <table class="table-hover table table-custom text-center" style="border: 1px solid #0A8CB3; border-radius: 10px; overflow: hidden;">
-                                    <thead class="table-hover estilo-info">
-                                        <tr>
-                                            <th scope="col" style="width: 50px;">
-                                                <input type="checkbox" id="masterCheckbox" style="transform: scale(1.2);">
-                                            </th>
-                                            <th scope="col">ID</th>
-                                            <th scope="col">Nombres</th>
-                                            <th scope="col">Apellidos</th>
-                                            <th scope="col">DNI</th>
-                                            <th scope="col">Email</th>
-                                            <th scope="col">Teléfono</th>
-                                            <th scope="col">Roles Actuales</th>
-                                            <th scope="col" id="role-assignment-header" style="display: none;">Asignar Roles</th>
-                                            <th scope="col">Estado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($personasSinRoles as $persona)
-                                            <tr class="persona-row" data-persona-id="{{ $persona->id_persona }}">
-                                                <td>
-                                                    <input type="checkbox" class="persona-checkbox" name="selected_personas[]" value="{{ $persona->id_persona }}" style="transform: scale(1.2);">
-                                                </td>
-                                                <td>{{ $persona->id_persona }}</td>
-                                                <td>{{ $persona->nombres }}</td>
-                                                <td>{{ $persona->apellidos }}</td>
-                                                <td>{{ $persona->dni }}</td>
-                                                <td>{{ $persona->email ?: 'No registrado' }}</td>
-                                                <td>{{ $persona->telefono ?: 'No registrado' }}</td>
-                                                <td>
-                                                    @if($persona->roles->count() > 0)
-                                                        @foreach($persona->roles as $rol)
-                                                            <span class="badge badge-info mr-1" data-role-id="{{ $rol->id_rol }}">{{ $rol->nombre }}</span>
+                                                <!-- Role Filter -->
+                                                <div class="col-md-3 mb-3 mb-md-0">
+                                                    <label for="rolFiltro" class="form-label fw-bold text-info">
+                                                        <i class="fas fa-user-tag me-1"></i>Filtrar por Rol
+                                                    </label>
+                                                    <select name="rol_filtro" id="rolFiltro" class="form-control" style="border-color: #17a2b8;">
+                                                        <option value="">Todos los roles</option>
+                                                        <option value="sin_roles" {{ $rol_filtro == 'sin_roles' ? 'selected' : '' }}>Sin roles asignados</option>
+                                                        @foreach($roles as $rol)
+                                                            <option value="{{ $rol->id_rol }}" {{ $rol_filtro == $rol->id_rol ? 'selected' : '' }}>
+                                                                {{ $rol->nombre }}
+                                                            </option>
                                                         @endforeach
-                                                    @else
-                                                        <span class="badge badge-secondary">Sin roles</span>
-                                                    @endif
-                                                </td>
-                                                <td class="role-management-cell" style="display: none; min-width: 200px;">
-                                                    <div class="role-manager p-2 border rounded" data-persona-id="{{ $persona->id_persona }}" style="background-color: #f8f9fa;">
-                                                        <!-- Current roles with remove buttons -->
-                                                        <div class="current-roles-manager mb-2">
-                                                            <small class="text-muted d-block mb-1">Roles actuales:</small>
-                                                            <div class="d-flex flex-wrap gap-1">
-                                                                @if($persona->roles->count() > 0)
-                                                                    @foreach($persona->roles as $rol)
-                                                                        <span class="badge badge-info role-tag position-relative" data-role-id="{{ $rol->id_rol }}" style="font-size: 0.75rem;">
-                                                                            {{ $rol->nombre }}
-                                                                            <button type="button" class="btn position-absolute remove-role-btn"
-                                                                                    style="font-size: 0.6rem; padding: 0.1rem; top: -3px; right: -3px; width: 14px; height: 14px; background: #dc3545; border: none; border-radius: 50%; color: white; line-height: 1;"
-                                                                                    data-role-id="{{ $rol->id_rol }}"
-                                                                                    aria-label="Remove role">
-                                                                                <i class="fas fa-times" style="font-size: 0.5rem;"></i>
-                                                                            </button>
-                                                                        </span>
-                                                                    @endforeach
-                                                                @else
-                                                                    <span class="text-muted small">Sin roles asignados</span>
-                                                                @endif
-                                                            </div>
-                                                        </div>
+                                                    </select>
+                                                </div>
 
-                                                        <!-- Add new roles -->
-                                                        <div class="add-roles-section">
-                                                            @if($roles->count() > $persona->roles->count())
-                                                                <select class="form-select form-select-sm add-role-select" style="font-size: 0.75rem;">
-                                                                    <option value="">Seleccionar rol...</option>
-                                                                    @foreach($roles as $rol)
-                                                                        @if(!$persona->roles->contains('id_rol', $rol->id_rol))
-                                                                            <option value="{{ $rol->id_rol }}" data-role-name="{{ $rol->nombre }}">
-                                                                                {{ $rol->nombre }}
-                                                                            </option>
-                                                                        @endif
-                                                                    @endforeach
-                                                                </select>
-                                                            @else
-                                                                <div class="text-muted small">Todos los roles ya están asignados</div>
-                                                            @endif
-                                                        </div>
+                                                <!-- Action Buttons -->
+                                                <div class="col-md-3 mb-3 mb-md-0">
+                                                    <div class="d-flex gap-2">
+                                                        <button type="button" class="btn btn-outline-secondary" id="btnLimpiar">
+                                                            <i class="fas fa-times me-1"></i>Limpiar
+                                                        </button>
                                                     </div>
-                                                </td>
-                                                <td>
-                                                    <span class="badge badge-{{ $persona->estado == 'Activo' ? 'success' : 'danger' }}">
-                                                        {{ $persona->estado }}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="10" class="text-center">No hay personas registradas que coincidan con la búsqueda.</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
+                                                </div>
+                                            </div>
+
+                                            <!-- Active Filters Display -->
+                                            <div class="row mt-3">
+                                                <div class="col-12">
+                                                    <div id="activeFilters" class="d-flex flex-wrap gap-2" style="display: none;">
+                                                        <small class="text-muted me-2"><i class="fas fa-filter me-1"></i>Filtros activos:</small>
+                                                        <!-- Active filter badges will be added here by JavaScript -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div id="tabla-personas">
+
+
+
+                            {{-- AJAX Role Assignment Table --}}
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="card border-0 shadow-sm">
+                                        <div class="card-body p-0">
+                                            <div class="table-responsive">
+                                                <table class="table table-hover mb-0">
+                                                    <thead class="bg-primary text-white">
+                                                        <tr>
+                                                            <th class="border-0" style="width: 60px;">ID</th>
+                                                            <th class="border-0">Persona</th>
+                                                            <th class="border-0" style="width: 100px;">DNI</th>
+                                                            <th class="border-0 text-center" style="width: 150px;">Roles Asignados</th>
+                                                            @foreach($roles as $rol)
+                                                                <th class="border-0 text-center" style="width: 120px;">
+                                                                    <div class="text-center">
+                                                                        @if ($rol->nombre == 'Administrador')
+                                                                            <i class="fas fa-crown text-warning d-block mb-1"></i>
+                                                                        @elseif($rol->nombre == 'Docente')
+                                                                            <i class="fas fa-chalkboard-teacher text-info d-block mb-1"></i>
+                                                                        @elseif($rol->nombre == 'Estudiante')
+                                                                            <i class="fas fa-user-graduate text-success d-block mb-1"></i>
+                                                                        @elseif($rol->nombre == 'Secretaria')
+                                                                            <i class="fas fa-user-tie text-secondary d-block mb-1"></i>
+                                                                        @elseif($rol->nombre == 'Representante')
+                                                                            <i class="fas fa-user-friends text-primary d-block mb-1"></i>
+                                                                        @else
+                                                                            <i class="fas fa-user-tag text-secondary d-block mb-1"></i>
+                                                                        @endif
+                                                                        <small class="font-weight-bold">{{ $rol->nombre }}</small>
+                                                                    </div>
+                                                                </th>
+                                                            @endforeach
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="personasTableBody">
+                                                        @forelse($personasSinRoles as $persona)
+                                                            <tr class="persona-row" data-persona-id="{{ $persona->id_persona }}">
+                                                                <td class="font-weight-bold align-middle">{{ $persona->id_persona }}</td>
+                                                                <td class="align-middle">
+                                                                    <strong>{{ $persona->nombres }} {{ $persona->apellidos }}</strong>
+                                                                    <br><small class="text-muted">{{ $persona->email ?: 'Sin email' }}</small>
+                                                                </td>
+                                                                <td class="align-middle">{{ $persona->dni }}</td>
+                                                                <td class="text-center align-middle">
+                                                                    @if($persona->roles->count() > 0)
+                                                                        <div class="d-flex flex-wrap gap-1 justify-content-center">
+                                                                            @foreach($persona->roles as $rol)
+                                                                                @php
+                                                                                    $iconClass = '';
+                                                                                    switch($rol->nombre) {
+                                                                                        case 'Administrador': $iconClass = 'fas fa-crown text-warning'; break;
+                                                                                        case 'Docente': $iconClass = 'fas fa-chalkboard-teacher text-info'; break;
+                                                                                        case 'Estudiante': $iconClass = 'fas fa-user-graduate text-success'; break;
+                                                                                        case 'Secretaria': $iconClass = 'fas fa-user-tie text-secondary'; break;
+                                                                                        case 'Representante': $iconClass = 'fas fa-user-friends text-primary'; break;
+                                                                                        default: $iconClass = 'fas fa-user-tag text-secondary'; break;
+                                                                                    }
+                                                                                @endphp
+                                                                                <span class="badge badge-info d-inline-flex align-items-center" style="font-size: 0.75rem;">
+                                                                                    <i class="{{ $iconClass }} me-1"></i>{{ $rol->nombre }}
+                                                                                </span>
+                                                                            @endforeach
+                                                                        </div>
+                                                                    @else
+                                                                        <span class="badge badge-secondary">Sin roles</span>
+                                                                    @endif
+                                                                </td>
+                                                                @foreach($roles as $rol)
+                                                                    <td class="text-center align-middle">
+                                                                        <div class="role-assignment-container" data-persona-id="{{ $persona->id_persona }}" data-role-id="{{ $rol->id_rol }}">
+                                                                            @if($persona->roles->contains('id_rol', $rol->id_rol))
+                                                                                <div class="role-assigned-container">
+                                                                                    <span class="badge badge-success px-3 py-2" title="Rol asignado" style="font-size: 14px; min-width: 32px; display: inline-flex; align-items: center; justify-content: center;">
+                                                                                        <i class="fas fa-check"></i>
+                                                                                    </span>
+                                                                                    <div class="remove-role-overlay remove-role-btn" title="Quitar rol {{ $rol->nombre }}">
+                                                                                        <i class="fas fa-times"></i>
+                                                                                    </div>
+                                                                                </div>
+                                                                            @else
+                                                                                <button type="button" class="btn btn-sm btn-outline-primary assign-role-btn" title="Asignar rol {{ $rol->nombre }}">
+                                                                                    <i class="fas fa-plus"></i>
+                                                                                </button>
+                                                                            @endif
+                                                                            <div class="role-form-container mt-2" style="display: none;">
+                                                                                <!-- Form will be loaded here -->
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                @endforeach
+                                                            </tr>
+                                                        @empty
+                                                            <tr>
+                                                                <td colspan="{{ 4 + $roles->count() }}" class="text-center py-4">
+                                                                    <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
+                                                                    <h5 class="text-muted">No hay personas registradas</h5>
+                                                                    <p class="text-muted">No se encontraron personas que coincidan con la búsqueda.</p>
+                                                                </td>
+                                                            </tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- AJAX Pagination --}}
+                            <div id="paginationContainer">
                                 {{ $personasSinRoles->appends(request()->query())->links() }}
                             </div>
-
 
                         </form>
                     </div>
@@ -185,409 +278,369 @@
             </div>
         </div>
     </div>
+
+    {{-- Role Configuration Modal --}}
+    <div class="modal fade" id="configureRoleModal" tabindex="-1" role="dialog" aria-labelledby="configureRoleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document" style="max-width: 800px;">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="configureRoleModalLabel">
+                        <i class="fas fa-cog mr-2"></i>
+                        Configurar Rol - <span id="modalPersonaName"></span>
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" style="max-height: 60vh; overflow-y: auto; padding: 1.5rem;">
+                    <div id="roleConfigurationContent">
+                        <!-- Role configuration forms will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-1"></i>Cerrar
+                    </button>
+                    <button type="button" class="btn btn-success" id="saveRoleConfiguration">
+                        <i class="fas fa-save mr-1"></i>Guardar Configuración
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+<script src="{{ asset('js/persona-validation.js') }}"></script>
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM Content Loaded - initializing role assignment');
+
         const loader = document.getElementById('loaderPrincipal');
         const contenido = document.getElementById('contenido-principal');
         if (loader) loader.style.display = 'none';
         if (contenido) contenido.style.opacity = '1';
 
+        const saveBtn = document.getElementById('saveRoleConfiguration');
+        console.log('Save button found:', saveBtn);
+
         const roleAssignmentForm = document.getElementById('roleAssignmentForm');
-        const assignRolesBtn = document.getElementById('assignRolesBtn');
-        const masterCheckbox = document.getElementById('masterCheckbox');
-        const personaCheckboxes = document.querySelectorAll('.persona-checkbox');
 
-        // Función para actualizar el estado del botón de asignar roles
-        function updateAssignButton() {
-            const checkedBoxes = document.querySelectorAll('.persona-checkbox:checked');
-            assignRolesBtn.disabled = checkedBoxes.length === 0;
-        }
 
-        // Función para mostrar/ocultar la columna de roles en la tabla
-        function toggleRoleSection() {
-            const checkedBoxes = document.querySelectorAll('.persona-checkbox:checked');
-            const roleCells = document.querySelectorAll('.role-management-cell');
-            const roleHeader = document.getElementById('role-assignment-header');
 
-            if (checkedBoxes.length > 0) {
-                // Mostrar la columna de roles para todas las filas
-                roleCells.forEach(function(cell) {
-                    cell.style.display = 'table-cell';
-                });
-                // Mostrar el header de la columna
-                if (roleHeader) {
-                    roleHeader.style.display = 'table-cell';
-                }
-            } else {
-                // Ocultar la columna de roles para todas las filas
-                roleCells.forEach(function(cell) {
-                    cell.style.display = 'none';
-                });
-                // Ocultar el header de la columna
-                if (roleHeader) {
-                    roleHeader.style.display = 'none';
-                }
-            }
-        }
 
-        // Función para mostrar/ocultar el contenido de roles por fila
-        function toggleRoleContent() {
-            const allRows = document.querySelectorAll('.persona-row');
-            allRows.forEach(function(row) {
-                const checkbox = row.querySelector('.persona-checkbox');
-                const roleCell = row.querySelector('.role-management-cell');
-                const roleManager = row.querySelector('.role-manager');
 
-                if (checkbox && checkbox.checked) {
-                    // Mostrar contenido para fila seleccionada
-                    if (roleManager) {
-                        roleManager.style.display = 'block';
+
+
+
+
+        // Save role configuration from modal and assign role
+        document.getElementById('saveRoleConfiguration').addEventListener('click', function() {
+            console.log('Save button clicked');
+
+            const personaId = this.getAttribute('data-persona-id');
+            const roleId = this.getAttribute('data-role-id');
+            const roleName = this.getAttribute('data-role-name');
+
+            console.log('Persona ID:', personaId, 'Role ID:', roleId, 'Role Name:', roleName);
+
+            const form = document.querySelector('.role-config-form');
+            console.log('Form found:', form);
+
+            // Validate form if it exists
+            if (form) {
+                const requiredFields = form.querySelectorAll('[required]');
+                let isValid = true;
+
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        field.classList.add('is-invalid');
+                        isValid = false;
+                    } else {
+                        field.classList.remove('is-invalid');
                     }
-                } else {
-                    // Ocultar contenido para fila no seleccionada
-                    if (roleManager) {
-                        roleManager.style.display = 'none';
-                    }
-                }
-            });
-        }
-
-        // Función para remover un rol
-        function removeRole(personaId, roleId, roleName) {
-            const roleManager = document.querySelector(`.role-manager[data-persona-id="${personaId}"]`);
-            const roleTag = roleManager.querySelector(`.role-tag[data-role-id="${roleId}"]`);
-            const roleInput = roleManager.querySelector(`input[name="assignments[${personaId}][roles][]"][value="${roleId}"]`);
-
-            // Verificar si este es el último rol de la persona
-            const currentRolesManager = roleManager.querySelector('.current-roles-manager');
-            const remainingDynamicTags = currentRolesManager.querySelectorAll('.role-tag');
-            const row = roleManager.closest('tr');
-            const existingRolesCount = row.querySelectorAll('.badge-info').length;
-
-            const totalRolesAfterRemoval = remainingDynamicTags.length - 1 + existingRolesCount;
-
-            if (totalRolesAfterRemoval === 0) {
-                // No permitir quitar el último rol
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'No se puede quitar el último rol',
-                    text: 'Cada persona debe tener al menos un rol asignado. Si desea cambiar el rol, primero agregue el nuevo rol y luego quite el anterior.',
-                    confirmButtonColor: '#007bff'
                 });
-                return; // No quitar el rol
-            }
 
-            // Proceder con la eliminación
-            if (roleTag) {
-                roleTag.remove();
-            }
-            if (roleInput) {
-                roleInput.remove();
-            }
-
-            // Nota: No quitamos el rol de "Roles Actuales" para mostrar vista previa
-            // Solo se quitará cuando se confirme la asignación
-
-            // Agregar la opción de vuelta al select
-            const select = roleManager.querySelector('.add-role-select');
-            if (select) {
-                const existingOption = select.querySelector(`option[value="${roleId}"]`);
-                if (!existingOption) {
-                    const newOption = document.createElement('option');
-                    newOption.value = roleId;
-                    newOption.setAttribute('data-role-name', roleName);
-                    newOption.innerHTML = roleName;
-                    select.appendChild(newOption);
+                if (!isValid) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Campos requeridos',
+                        text: 'Por favor complete todos los campos obligatorios.',
+                        confirmButtonColor: '#007bff'
+                    });
+                    return;
                 }
             }
 
-            // Actualizar el mensaje si no quedan roles dinámicos
-            const remainingTagsAfterRemoval = currentRolesManager.querySelectorAll('.role-tag');
-            if (remainingTagsAfterRemoval.length === 0) {
-                currentRolesManager.innerHTML = '<span class="text-muted small">Sin roles asignados</span>';
-            }
-        }
+            // Show confirmation message based on role
+            let confirmTitle = 'Confirmar asignación de rol';
+            let confirmText = `¿Está seguro de asignar el rol "${roleName}" a esta persona?`;
 
-        // Función para agregar un rol
-        function addRole(personaId, roleId, roleName) {
-            const roleManager = document.querySelector(`.role-manager[data-persona-id="${personaId}"]`);
-            const currentRolesManager = roleManager.querySelector('.current-roles-manager');
-
-            // Remover mensaje de "sin roles" si existe
-            const noRolesMsg = currentRolesManager.querySelector('.text-muted');
-            if (noRolesMsg) {
-                noRolesMsg.remove();
+            if (roleName === 'Administrador') {
+                confirmTitle = '⚠️ Confirmar acceso total al sistema';
+                confirmText = `¡ATENCIÓN! Está a punto de otorgar acceso TOTAL al sistema como Administrador. Esta persona tendrá control completo sobre todas las funciones del sistema.\n\n¿Está completamente seguro de continuar?`;
             }
 
-            // Agregar el tag del rol
-            const roleTag = document.createElement('span');
-            roleTag.className = 'badge badge-success me-1 mb-1 role-tag';
-            roleTag.setAttribute('data-role-id', roleId);
-            roleTag.innerHTML = `
-                ${roleName}
-                <button type="button" class="btn position-absolute remove-role-btn" style="font-size: 0.6rem; padding: 0.1rem; top: -3px; right: -3px; width: 14px; height: 14px; background: #dc3545; border: none; border-radius: 50%; color: white; line-height: 1;" data-role-id="${roleId}" aria-label="Remove role">
-                    <i class="fas fa-times" style="font-size: 0.5rem;"></i>
-                </button>
-                <input type="hidden" name="assignments[${personaId}][roles][]" value="${roleId}" class="role-input">
-            `;
-            currentRolesManager.appendChild(roleTag);
-
-            // Remover la opción del select
-            const select = roleManager.querySelector('.add-role-select');
-            const optionToRemove = select.querySelector(`option[value="${roleId}"]`);
-            if (optionToRemove) {
-                optionToRemove.remove();
-            }
-
-            // Agregar event listener al botón de remover
-            roleTag.querySelector('.remove-role-btn').addEventListener('click', function() {
-                removeRole(personaId, roleId, roleName);
-            });
-        }
-
-
-
-
-
-
-
-        // Event listener para checkboxes individuales
-        personaCheckboxes.forEach(function(checkbox) {
-            checkbox.addEventListener('change', function() {
-                updateAssignButton();
-                toggleRoleSection();
-                toggleRoleContent();
-                updateMasterCheckbox();
-            });
-        });
-
-        // Event listener para checkbox maestro
-        masterCheckbox.addEventListener('change', function() {
-            const isChecked = masterCheckbox.checked;
-            personaCheckboxes.forEach(function(checkbox) {
-                checkbox.checked = isChecked;
-            });
-            updateAssignButton();
-            toggleRoleSection();
-            toggleRoleContent();
-        });
-
-
-
-        // Función para actualizar el estado del checkbox maestro
-        function updateMasterCheckbox() {
-            const totalCheckboxes = personaCheckboxes.length;
-            const checkedBoxes = document.querySelectorAll('.persona-checkbox:checked').length;
-
-            if (checkedBoxes === 0) {
-                masterCheckbox.checked = false;
-                masterCheckbox.indeterminate = false;
-            } else if (checkedBoxes === totalCheckboxes) {
-                masterCheckbox.checked = true;
-                masterCheckbox.indeterminate = false;
-            } else {
-                masterCheckbox.checked = false;
-                masterCheckbox.indeterminate = true;
-            }
-        }
-
-
-
-        // Función de validación del formulario
-        function validateForm(e) {
-            // Alerta simple para confirmar que JavaScript se ejecuta
             Swal.fire({
-                icon: 'info',
-                title: 'Validando...',
-                text: 'JavaScript se está ejecutando correctamente',
-                timer: 1000,
-                showConfirmButton: false
-            });
-
-            const selectedPersons = document.querySelectorAll('.persona-checkbox:checked');
-            const debugInfo = [
-                `Personas seleccionadas: ${selectedPersons.length}`
-            ];
-
-            if (selectedPersons.length === 0) {
-                e.preventDefault();
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Selección requerida',
-                    text: 'Debe seleccionar al menos una persona para asignar roles.',
-                    confirmButtonColor: '#007bff'
-                });
-                return false;
-            }
-
-            // Verificar que cada persona seleccionada tenga al menos un rol asignado
-            let personsWithoutRoles = [];
-            let hasAnyRoles = false;
-            let totalRolesAssigned = 0;
-            let personSummaries = [];
-
-            selectedPersons.forEach(function(personaCheckbox) {
-                const personaId = personaCheckbox.value;
-                const row = personaCheckbox.closest('tr');
-                const nombre = row.cells[2].textContent.trim();
-                const apellido = row.cells[3].textContent.trim();
-                const nombreCompleto = `${nombre} ${apellido}`;
-
-                // Contar roles que van a ser enviados (los que están en "Asignar Roles")
-                let rolesToSendCount = 0;
-                const roleManager = row.querySelector(`.role-manager[data-persona-id="${personaId}"]`);
-                if (roleManager) {
-                    // Roles existentes que quedan (badges en "Asignar Roles")
-                    const remainingBadges = roleManager.querySelectorAll('.role-tag[data-role-id]');
-                    rolesToSendCount += remainingBadges.length;
-
-                    // Roles nuevos agregados (inputs hidden)
-                    const dynamicRoles = roleManager.querySelectorAll('input[name="assignments[' + personaId + '][roles][]"]');
-                    rolesToSendCount += dynamicRoles.length;
-                }
-
-                totalRolesAssigned += rolesToSendCount;
-
-                if (rolesToSendCount === 0) {
-                    personsWithoutRoles.push(nombreCompleto);
-                } else {
-                    hasAnyRoles = true;
-                    personSummaries.push(`${nombreCompleto} (${rolesToSendCount} ${rolesToSendCount === 1 ? 'rol' : 'roles'})`);
-                }
-            });
-
-            // Crear mensaje amigable para el usuario
-            let messageTitle = `${selectedPersons.length} ${selectedPersons.length === 1 ? 'persona seleccionada' : 'personas seleccionadas'}`;
-            let messageBody = '';
-
-            if (personSummaries.length > 0) {
-                messageBody = personSummaries.join('<br>');
-            }
-
-            if (personsWithoutRoles.length > 0) {
-                if (messageBody) messageBody += '<br><br>';
-                messageBody += `<span style="color: #dc3545;">⚠️ Personas sin roles asignados:<br>${personsWithoutRoles.join('<br>')}</span>`;
-            }
-
-            // Mostrar información amigable
-            Swal.fire({
-                icon: hasAnyRoles ? 'info' : 'warning',
-                title: messageTitle,
-                html: messageBody || 'No hay personas con roles asignados.',
-                confirmButtonText: 'Confirmar asignación',
+                icon: roleName === 'Administrador' ? 'warning' : 'question',
+                title: confirmTitle,
+                html: confirmText,
+                confirmButtonText: 'Sí, asignar rol',
                 cancelButtonText: 'Cancelar',
                 showCancelButton: true,
-                confirmButtonColor: '#28a745'
+                confirmButtonColor: roleName === 'Administrador' ? '#dc3545' : '#28a745',
+                cancelButtonColor: '#6c757d'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Verificar validaciones finales
-                    if (!hasAnyRoles) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Roles requeridos',
-                            text: 'Debe asignar al menos un rol a alguna de las personas seleccionadas.',
-                            confirmButtonColor: '#007bff'
+                    // Show loading indicators
+                    if (loader) loader.style.display = 'flex';
+
+                    // Disable modal buttons and show loading state
+                    const modal = document.getElementById('configureRoleModal');
+                    const saveBtn = document.getElementById('saveRoleConfiguration');
+                    const cancelBtn = modal.querySelector('.btn-secondary');
+
+                    // Disable buttons
+                    saveBtn.disabled = true;
+                    cancelBtn.disabled = true;
+
+                    // Add loading spinner to save button
+                    saveBtn.classList.add('btn-loading');
+                    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Procesando...';
+
+                    // Add loading overlay to modal
+                    const modalContent = modal.querySelector('.modal-content');
+                    const loadingOverlay = document.createElement('div');
+                    loadingOverlay.className = 'modal-loader';
+                    loadingOverlay.innerHTML = `
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Cargando...</span>
+                            </div>
+                            <div class="mt-2">
+                                <strong>Procesando...</strong>
+                                <br>
+                                <small class="text-muted">Por favor espere</small>
+                            </div>
+                        </div>
+                    `;
+                    modalContent.appendChild(loadingOverlay);
+
+                    // Collect form data manually to ensure proper structure
+                    const configData = {};
+                    if (form) {
+                        // Get all form inputs
+                        const inputs = form.querySelectorAll('input, select, textarea');
+                        console.log('Found inputs:', inputs.length);
+
+                        // Specifically log checkbox inputs
+                        const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+                        console.log('Found checkboxes:', checkboxes.length);
+                        checkboxes.forEach(cb => {
+                            console.log('Checkbox:', cb.name, cb.value, cb.checked, cb.id);
                         });
-                        return false;
-                    }
 
-                    if (personsWithoutRoles.length > 0) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Roles incompletos',
-                            text: `Las siguientes personas no tienen roles seleccionados: ${personsWithoutRoles.join(', ')}`,
-                            confirmButtonColor: '#007bff'
-                        });
-                        return false;
-                    }
+                        inputs.forEach(input => {
+                            console.log('Processing input:', input.name, input.value, input.type, input.checked);
+                            if (input.name && input.value) {
+                                // Parse array notation like "docente[especialidades][]" or "secretaria[emailUniversidad_username]"
+                                const bracketStart = input.name.indexOf('[');
+                                const bracketEnd = input.name.indexOf(']', bracketStart);
+                                if (bracketStart !== -1 && bracketEnd !== -1 && bracketEnd > bracketStart) {
+                                    const prefix = input.name.substring(0, bracketStart);
+                                    // Check if this is an array field (ends with [])
+                                    const hasArrayBrackets = input.name.substring(bracketEnd + 1, bracketEnd + 3) === '[]';
+                                    const fieldEnd = hasArrayBrackets ? bracketEnd + 3 : bracketEnd;
+                                    const fieldWithBrackets = input.name.substring(bracketStart + 1, fieldEnd);
+                                    const isArray = fieldWithBrackets.endsWith('[]');
+                                    const field = isArray ? fieldWithBrackets.slice(0, -2) : fieldWithBrackets;
 
-                    // Si todo está bien, construir FormData manualmente y enviar
-                    if (loader) {
-                        loader.style.display = 'flex';
-                    }
+                                    if (!configData[prefix]) {
+                                        configData[prefix] = {};
+                                    }
 
-                    // Crear FormData manualmente con los datos correctos
-                    const formData = new FormData();
-
-                    // Agregar token CSRF
-                    const csrfToken = document.querySelector('input[name="_token"]');
-                    if (csrfToken) {
-                        formData.append('_token', csrfToken.value);
-                    }
-
-                    // Agregar personas seleccionadas
-                    selectedPersons.forEach(function(personaCheckbox) {
-                        formData.append('selected_personas[]', personaCheckbox.value);
-                    });
-
-                    // Agregar assignments de roles (solo los roles que quedan en "Asignar Roles")
-                    selectedPersons.forEach(function(personaCheckbox) {
-                        const personaId = personaCheckbox.value;
-                        const row = personaCheckbox.closest('tr');
-
-                        // Obtener roles que quedan en "Asignar Roles" (badges existentes que no se quitaron + nuevos agregados)
-                        const rolesInAssignment = [];
-                        const roleManager = row.querySelector(`.role-manager[data-persona-id="${personaId}"]`);
-                        if (roleManager) {
-                            // Roles existentes que quedan (badges en "Asignar Roles")
-                            const remainingBadges = roleManager.querySelectorAll('.role-tag[data-role-id]');
-                            remainingBadges.forEach(function(badge) {
-                                const roleId = badge.getAttribute('data-role-id');
-                                if (roleId) {
-                                    rolesInAssignment.push(roleId);
+                                    // Handle array fields
+                                    if (isArray) {
+                                        if (!configData[prefix][field]) {
+                                            configData[prefix][field] = [];
+                                        }
+                                        // Only add if it's a checked checkbox or has value
+                                        if (input.type === 'checkbox' && input.checked) {
+                                            configData[prefix][field].push(input.value);
+                                            console.log('Added checkbox value to array:', field, input.value);
+                                        } else if (input.type !== 'checkbox') {
+                                            configData[prefix][field].push(input.value);
+                                            console.log('Added non-checkbox value to array:', field, input.value);
+                                        }
+                                    } else {
+                                        // Regular field
+                                        configData[prefix][field] = input.value;
+                                        console.log('Set regular field:', prefix, field, input.value);
+                                    }
+                                } else {
+                                    configData[input.name] = input.value;
+                                    console.log('Set top-level field:', input.name, input.value);
                                 }
-                            });
-
-                            // Roles nuevos agregados (inputs hidden)
-                            const dynamicRoles = roleManager.querySelectorAll('input[name="assignments[' + personaId + '][roles][]"]');
-                            dynamicRoles.forEach(function(roleInput) {
-                                rolesInAssignment.push(roleInput.value);
-                            });
-                        }
-
-                        // Enviar solo los roles que quedan en "Asignar Roles"
-                        rolesInAssignment.forEach(function(roleId) {
-                            formData.append(`assignments[${personaId}][roles][]`, roleId);
+                            }
                         });
-                    });
+                    }
 
-                    // Enviar usando fetch en lugar de submit
-                    fetch(roleAssignmentForm.action, {
+                    // Debug: log collected data
+                    console.log('Collected configData:', configData);
+                    console.log('Final configData to send:', JSON.stringify(configData));
+
+                    // Send assignment request
+                    fetch('/asignacion-roles/asignar-rol', {
                         method: 'POST',
-                        body: formData,
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            persona_id: personaId,
+                            role_id: roleId,
+                            config_data: configData
+                        })
                     })
-                    .then(response => {
-                        if (response.redirected) {
-                            window.location.href = response.url;
-                        } else {
-                            return response.text();
-                        }
-                    })
+                    .then(response => response.json())
                     .then(data => {
-                        if (data) {
-                            // Si hay respuesta HTML, recargar la página
-                            window.location.reload();
+                        // Hide all loading indicators
+                        if (loader) loader.style.display = 'none';
+
+                        // Reset modal buttons and remove loading overlay
+                        const modal = document.getElementById('configureRoleModal');
+                        const saveBtn = document.getElementById('saveRoleConfiguration');
+                        const cancelBtn = modal.querySelector('.btn-secondary');
+
+                        // Re-enable buttons
+                        saveBtn.disabled = false;
+                        cancelBtn.disabled = false;
+
+                        // Remove loading spinner from save button
+                        saveBtn.classList.remove('btn-loading');
+                        saveBtn.innerHTML = '<i class="fas fa-save mr-1"></i>Guardar Configuración';
+
+                        // Remove loading overlay from modal
+                        const loadingOverlay = modal.querySelector('.modal-loader');
+                        if (loadingOverlay) {
+                            loadingOverlay.remove();
+                        }
+
+                        if (data.success) {
+                            // Find the container in the table and update it
+                            const container = document.querySelector(`[data-persona-id="${personaId}"][data-role-id="${roleId}"]`);
+                            if (container) {
+                                const checkbox = container.querySelector('.role-checkbox');
+                                const assignBtn = container.querySelector('.assign-role-btn');
+
+                                if (checkbox && assignBtn) {
+                                    checkbox.checked = true;
+                                    checkbox.style.display = 'inline-block';
+                                    assignBtn.style.display = 'none';
+                                }
+                            }
+
+                            // Close modal
+                            $('#configureRoleModal').modal('hide');
+
+                            // Show success message
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Rol asignado exitosamente',
+                                html: data.message || `El rol "${roleName}" ha sido asignado correctamente.`,
+                                confirmButtonColor: '#007bff',
+                                timer: 3000,
+                                timerProgressBar: true
+                            });
+
+                            // Update table row via AJAX instead of reloading page
+                            setTimeout(() => {
+                                // Update the specific row in the table
+                                const row = container.closest('tr');
+                                const rolesCell = row.cells[3]; // Roles column
+
+                                // Update roles display
+                                const currentRoles = @json($roles->pluck('nombre', 'id_rol'));
+                                const roleName = currentRoles[roleId];
+
+                                let rolesHtml = '';
+                                if (rolesCell.querySelector('.badge-secondary')) {
+                                    // No roles before, replace with first role
+                                    rolesHtml = `<div class="d-flex flex-wrap gap-1 justify-content-center">
+                                        <span class="badge badge-info d-inline-flex align-items-center" style="font-size: 0.75rem;">
+                                            <i class="fas fa-user-tag me-1"></i>${roleName}
+                                        </span>
+                                    </div>`;
+                                } else {
+                                    // Add to existing roles
+                                    const existingRolesDiv = rolesCell.querySelector('.d-flex');
+                                    const newRoleBadge = document.createElement('span');
+                                    newRoleBadge.className = 'badge badge-info d-inline-flex align-items-center';
+                                    newRoleBadge.style.fontSize = '0.75rem';
+                                    newRoleBadge.innerHTML = `<i class="fas fa-user-tag me-1"></i>${roleName}`;
+                                    existingRolesDiv.appendChild(newRoleBadge);
+                                }
+
+                                // Update the button to show as assigned with badge and overlay
+                                container.innerHTML = `
+                                    <div class="role-assigned-container">
+                                        <span class="badge badge-success px-3 py-2" title="Rol asignado" style="font-size: 14px; min-width: 32px; display: inline-flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-check"></i>
+                                        </span>
+                                        <div class="remove-role-overlay remove-role-btn" title="Quitar rol ${roleName}">
+                                            <i class="fas fa-times"></i>
+                                        </div>
+                                    </div>
+                                    <div class="role-form-container mt-2" style="display: none;">
+                                        <!-- Form will be loaded here -->
+                                    </div>
+                                `;
+                            }, 1500);
+                        } else {
+                            throw new Error(data.message || 'Error al asignar el rol');
                         }
                     })
                     .catch(error => {
-                        console.error('Error:', error);
-                        // En caso de error, recargar la página
-                        window.location.reload();
+                        // Hide all loading indicators
+                        if (loader) loader.style.display = 'none';
+
+                        // Reset modal buttons and remove loading overlay
+                        const modal = document.getElementById('configureRoleModal');
+                        const saveBtn = document.getElementById('saveRoleConfiguration');
+                        const cancelBtn = modal.querySelector('.btn-secondary');
+
+                        // Re-enable buttons
+                        saveBtn.disabled = false;
+                        cancelBtn.disabled = false;
+
+                        // Remove loading spinner from save button
+                        saveBtn.classList.remove('btn-loading');
+                        saveBtn.innerHTML = '<i class="fas fa-save mr-1"></i>Guardar Configuración';
+
+                        // Remove loading overlay from modal
+                        const loadingOverlay = modal.querySelector('.modal-loader');
+                        if (loadingOverlay) {
+                            loadingOverlay.remove();
+                        }
+
+                        console.error('Error assigning role:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: error.message || 'Error al asignar el rol. Por favor, inténtelo de nuevo.',
+                            confirmButtonColor: '#007bff'
+                        });
                     });
                 }
             });
+        });
 
-            e.preventDefault(); // Siempre prevenir envío automático
-            return false;
-        }
 
-        // Validación del formulario antes de enviar
-        roleAssignmentForm.addEventListener('submit', validateForm);
+
+
+
+        // Form submission handler - REMOVED (now only individual assignment)
 
         // Mostrar mensajes de éxito o error con SweetAlert2
         @if (session('success'))
@@ -624,125 +677,370 @@
             });
         @endif
 
-        // Event listeners para botones de remover roles (iniciales)
-        document.querySelectorAll('.remove-role-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                const roleId = this.getAttribute('data-role-id');
-                const personaId = this.closest('.role-manager').getAttribute('data-persona-id');
-                const roleTag = this.closest('.role-tag');
-                const roleName = roleTag.textContent.trim().replace('×', '').trim();
-                removeRole(personaId, roleId, roleName);
-            });
-        });
+        // Handle assign role button clicks
+        document.addEventListener('click', function(e) {
+            // Check if the clicked element or its parent has the assign-role-btn class
+            const assignBtn = e.target.closest('.assign-role-btn');
+            if (assignBtn) {
+                const container = assignBtn.closest('.role-assignment-container');
+                const personaId = container.dataset.personaId;
+                const roleId = container.dataset.roleId;
 
-        // Event listeners para select de agregar roles
-        document.addEventListener('change', function(e) {
-            if (e.target.classList.contains('add-role-select')) {
-                const select = e.target;
-                const selectedOption = select.options[select.selectedIndex];
-                if (selectedOption.value) {
-                    const roleId = selectedOption.value;
-                    const roleName = selectedOption.getAttribute('data-role-name');
-                    const personaId = select.closest('.role-manager').getAttribute('data-persona-id');
-                    addRole(personaId, roleId, roleName);
-                    // Reset select
-                    select.value = '';
-                }
+                // Get role name from the table header
+                const roleMap = @json($roles->pluck('nombre', 'id_rol'));
+                const roleName = roleMap[roleId] || 'Rol desconocido';
+
+                // Show the form for this role
+                showRoleForm(container, personaId, roleId, roleName);
+            }
+
+            // Check if the clicked element or its parent has the remove-role-btn class
+            const removeBtn = e.target.closest('.remove-role-btn');
+            if (removeBtn) {
+                const container = removeBtn.closest('.role-assignment-container');
+                const personaId = container.dataset.personaId;
+                const roleId = container.dataset.roleId;
+
+                // Get role name from the table header
+                const roleMap = @json($roles->pluck('nombre', 'id_rol'));
+                const roleName = roleMap[roleId] || 'Rol desconocido';
+
+                // Get person name for confirmation
+                const row = container.closest('tr');
+                const personNameCell = row.cells[1];
+                const personName = personNameCell.querySelector('strong').textContent.trim();
+
+                // Show confirmation dialog
+                Swal.fire({
+                    icon: 'warning',
+                    title: `Quitar rol "${roleName}"`,
+                    text: `¿Confirmar quitar el rol a ${personName}?`,
+                    confirmButtonText: 'Quitar',
+                    cancelButtonText: 'Cancelar',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Show loading
+                        if (loader) loader.style.display = 'flex';
+
+                        // Send remove role request
+                        fetch('/asignacion-roles/desasignar-rol', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                persona_id: personaId,
+                                role_id: roleId
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            // Hide loader
+                            if (loader) loader.style.display = 'none';
+
+                            if (data.success) {
+                                // Update the container to show assign button
+                                container.innerHTML = `
+                                    <button type="button" class="btn btn-sm btn-outline-primary assign-role-btn" title="Asignar rol ${roleName}">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    <div class="role-form-container mt-2" style="display: none;">
+                                        <!-- Form will be loaded here -->
+                                    </div>
+                                `;
+
+                                // Update roles display in the roles column
+                                const rolesCell = row.cells[3];
+                                const currentRoles = @json($roles->pluck('nombre', 'id_rol'));
+                                const roleNameToRemove = currentRoles[roleId];
+
+                                // Find and remove the role badge
+                                const roleBadges = rolesCell.querySelectorAll('.badge');
+                                roleBadges.forEach(badge => {
+                                    if (badge.textContent.includes(roleNameToRemove)) {
+                                        badge.remove();
+                                    }
+                                });
+
+                                // If no roles left, show "Sin roles" message
+                                const remainingBadges = rolesCell.querySelectorAll('.badge');
+                                if (remainingBadges.length === 0 || (remainingBadges.length === 1 && remainingBadges[0].classList.contains('badge-secondary'))) {
+                                    rolesCell.innerHTML = '<span class="badge badge-secondary">Sin roles</span>';
+                                }
+
+                                // Show success message
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Rol desasignado',
+                                    html: data.message || `El rol "${roleName}" ha sido removido correctamente.`,
+                                    confirmButtonColor: '#007bff',
+                                    timer: 3000,
+                                    timerProgressBar: true
+                                });
+                            } else {
+                                throw new Error(data.message || 'Error al desasignar el rol');
+                            }
+                        })
+                        .catch(error => {
+                            // Hide loader
+                            if (loader) loader.style.display = 'none';
+
+                            console.error('Error removing role:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: error.message || 'Error al desasignar el rol. Por favor, inténtelo de nuevo.',
+                                confirmButtonColor: '#007bff'
+                            });
+                        });
+                    }
+                });
             }
         });
 
-        // Búsqueda reactiva
-        let searchTimeout;
-        document.getElementById('inputBuscar').addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            const searchTerm = this.value;
+        // Function to show role configuration form in modal
+        function showRoleForm(container, personaId, roleId, roleName) {
+            const assignBtn = container.querySelector('.assign-role-btn');
 
-            searchTimeout = setTimeout(function() {
-                performSearch(searchTerm);
-            }, 300); // Esperar 300ms después de que el usuario deje de escribir
-        });
+            if (!assignBtn) {
+                console.error('Assign button not found');
+                return;
+            }
 
-        function performSearch(searchTerm) {
-            const formData = new FormData();
-            formData.append('buscarpor', searchTerm);
-            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+            // Get person name for modal title
+            const row = container.closest('tr');
+            const personNameCell = row.cells[1];
+            const personName = personNameCell.querySelector('strong').textContent.trim();
 
-            fetch(window.location.pathname, {
-                method: 'POST',
-                body: formData,
+            // Set modal title
+            document.getElementById('configureRoleModalLabel').innerHTML = `
+                <i class="fas fa-user-tag mr-2"></i>
+                Configurar ${roleName} - ${personName}
+            `;
+
+            // Load form content into modal via AJAX
+            const modalBody = document.querySelector('#configureRoleModal .modal-body');
+            modalBody.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Cargando formulario...</div>';
+
+            // Make AJAX request to load the form
+            fetch(`/asignacion-roles/get-form/${roleId}/${personaId}`, {
+                method: 'GET',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
                 }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(html => {
+                modalBody.innerHTML = html;
+
+                // Update modal footer buttons with data attributes
+                const saveBtn = document.getElementById('saveRoleConfiguration');
+                const cancelBtn = document.querySelector('#configureRoleModal .btn-secondary');
+
+                saveBtn.setAttribute('data-persona-id', personaId);
+                saveBtn.setAttribute('data-role-id', roleId);
+                saveBtn.setAttribute('data-role-name', roleName);
+                saveBtn.setAttribute('data-container-selector', `[data-persona-id="${personaId}"][data-role-id="${roleId}"]`);
+
+                cancelBtn.setAttribute('data-persona-id', personaId);
+                cancelBtn.setAttribute('data-role-id', roleId);
+                cancelBtn.setAttribute('data-container-selector', `[data-persona-id="${personaId}"][data-role-id="${roleId}"]`);
+
+                // Show modal
+                $('#configureRoleModal').modal('show');
+
+                // Execute any JavaScript that might be in the loaded content
+                // This ensures that form-specific JavaScript runs after the modal is shown
+                setTimeout(() => {
+                    // Trigger any initialization that might be needed
+                    if (roleName === 'Estudiante' && typeof initializeEstudianteModalForm === 'function') {
+                        initializeEstudianteModalForm();
+                    } else if (roleName === 'Docente' && typeof initializeDocenteModalForm === 'function') {
+                        initializeDocenteModalForm();
+                    } else if (roleName === 'Secretaria' && typeof initializeSecretariaModalForm === 'function') {
+                        initializeSecretariaModalForm();
+                    } else if (typeof initializeFormScripts === 'function') {
+                        initializeFormScripts();
+                    }
+                }, 100);
+            })
+            .catch(error => {
+                console.error('Error loading form:', error);
+                modalBody.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Error al cargar el formulario. Por favor, inténtelo de nuevo.
+                    </div>
+                `;
+            });
+        }
+
+
+
+
+
+        // AJAX Search and Filtering Functionality
+        let searchTimeout;
+
+        // Function to perform AJAX search
+        function performAjaxSearch(page = 1) {
+            const searchTerm = document.getElementById('inputBuscar').value.trim();
+            const tipoBusqueda = document.getElementById('tipoBusqueda').value;
+            const rolFiltro = document.getElementById('rolFiltro').value;
+
+            // Show loading
+            if (loader) loader.style.display = 'flex';
+
+            // Prepare data for AJAX request
+            const ajaxData = {
+                buscarpor: searchTerm,
+                tipo_busqueda: tipoBusqueda,
+                rol_filtro: rolFiltro,
+                page: page
+            };
+
+            // Make AJAX request
+            fetch('/asignacion-roles/ajax-search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(ajaxData)
             })
             .then(response => response.json())
             .then(data => {
-                // Actualizar la tabla con los resultados
-                updateTable(data.html);
-                // Actualizar la paginación
-                updatePagination(data.pagination);
-                // Re-inicializar los event listeners
-                reinitializeEventListeners();
+                // Hide loader
+                if (loader) loader.style.display = 'none';
+
+                if (data.html) {
+                    // Update table body
+                    document.getElementById('personasTableBody').innerHTML = data.html;
+
+                    // Update pagination
+                    document.getElementById('paginationContainer').innerHTML = data.pagination;
+
+                    // Update URL without reloading
+                    const params = new URLSearchParams();
+                    if (searchTerm) params.append('buscarpor', searchTerm);
+                    if (tipoBusqueda && tipoBusqueda !== 'nombre') params.append('tipo_busqueda', tipoBusqueda);
+                    if (rolFiltro) params.append('rol_filtro', rolFiltro);
+                    if (page > 1) params.append('page', page);
+
+                    const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+                    window.history.pushState({}, '', newUrl);
+
+                    // Update active filters display
+                    updateActiveFilters();
+                } else {
+                    console.error('No HTML data received');
+                }
             })
             .catch(error => {
-                console.error('Error en búsqueda:', error);
+                // Hide loader
+                if (loader) loader.style.display = 'none';
+
+                console.error('Error performing AJAX search:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error al realizar la búsqueda. Por favor, inténtelo de nuevo.',
+                    confirmButtonColor: '#007bff'
+                });
             });
         }
 
-        function updateTable(html) {
-            const tableBody = document.querySelector('tbody');
-            tableBody.innerHTML = html;
-        }
+        // Search input with debounce
+        document.getElementById('inputBuscar').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                performAjaxSearch();
+            }, 500);
+        });
 
-        function updatePagination(paginationHtml) {
-            const paginationContainer = document.getElementById('tabla-personas');
-            if (paginationContainer) {
-                paginationContainer.innerHTML = paginationHtml;
+        // Filter select changes
+        document.getElementById('tipoBusqueda').addEventListener('change', function() {
+            performAjaxSearch();
+        });
+        document.getElementById('rolFiltro').addEventListener('change', function() {
+            performAjaxSearch();
+        });
+
+        // Clear filters button
+        document.getElementById('btnLimpiar').addEventListener('click', function() {
+            document.getElementById('inputBuscar').value = '';
+            document.getElementById('tipoBusqueda').value = 'nombre';
+            document.getElementById('rolFiltro').value = '';
+            performAjaxSearch();
+        });
+
+        // Handle pagination clicks (event delegation)
+        document.addEventListener('click', function(e) {
+            const paginationLink = e.target.closest('.pagination a');
+            if (paginationLink) {
+                e.preventDefault();
+                const url = new URL(paginationLink.href);
+                const page = url.searchParams.get('page') || 1;
+                performAjaxSearch(page);
+            }
+        });
+
+        // Function to update active filters display
+        function updateActiveFilters() {
+            const activeFiltersDiv = document.getElementById('activeFilters');
+            const searchTerm = document.getElementById('inputBuscar').value.trim();
+            const tipoBusqueda = document.getElementById('tipoBusqueda').value;
+            const rolFiltro = document.getElementById('rolFiltro').value;
+
+            const roleMap = @json($roles->pluck('nombre', 'id_rol'));
+            let filters = [];
+
+            if (searchTerm) {
+                const tipoText = tipoBusqueda === 'dni' ? 'DNI' : (tipoBusqueda === 'email' ? 'Email' : 'Nombre');
+                filters.push(`<span class="badge badge-primary"><i class="fas fa-search me-1"></i>${tipoText}: "${searchTerm}"</span>`);
+            }
+
+            if (rolFiltro) {
+                let rolText;
+                if (rolFiltro === 'sin_roles') {
+                    rolText = 'Sin roles asignados';
+                } else {
+                    rolText = roleMap[rolFiltro] || 'Rol desconocido';
+                }
+                filters.push(`<span class="badge badge-info"><i class="fas fa-user-tag me-1"></i>Rol: ${rolText}</span>`);
+            }
+
+            if (filters.length > 0) {
+                activeFiltersDiv.innerHTML = '<small class="text-muted me-2"><i class="fas fa-filter me-1"></i>Filtros activos:</small>' + filters.join(' ');
+                activeFiltersDiv.style.display = 'flex';
+            } else {
+                activeFiltersDiv.style.display = 'none';
             }
         }
 
-        function reinitializeEventListeners() {
-            // Re-inicializar checkboxes
-            const newPersonaCheckboxes = document.querySelectorAll('.persona-checkbox');
-            newPersonaCheckboxes.forEach(function(checkbox) {
-                checkbox.addEventListener('change', function() {
-                    updateAssignButton();
-                    toggleRoleSection();
-                    toggleRoleContent();
-                    updateMasterCheckbox();
-                });
-            });
+        // Initialize active filters on page load
+        updateActiveFilters();
 
-            // Re-inicializar botones de remover roles
-            document.querySelectorAll('.remove-role-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    const roleId = this.getAttribute('data-role-id');
-                    const personaId = this.closest('.role-manager').getAttribute('data-persona-id');
-                    const roleTag = this.closest('.role-tag');
-                    const roleName = roleTag.textContent.trim().replace('×', '').trim();
-                    removeRole(personaId, roleId, roleName);
-                });
-            });
-
-            // Re-inicializar selects de agregar roles
-            document.querySelectorAll('.add-role-select').forEach(function(select) {
-                select.addEventListener('change', function() {
-                    const selectedOption = select.options[select.selectedIndex];
-                    if (selectedOption.value) {
-                        const roleId = selectedOption.value;
-                        const roleName = selectedOption.getAttribute('data-role-name');
-                        const personaId = select.closest('.role-manager').getAttribute('data-persona-id');
-                        addRole(personaId, roleId, roleName);
-                        select.value = '';
-                    }
-                });
-            });
-
-            // Actualizar el estado de la interfaz después de la búsqueda
-            updateAssignButton();
-            toggleRoleSection();
-            toggleRoleContent();
-            updateMasterCheckbox();
-        }
+        // Enter key support for search
+        document.getElementById('inputBuscar').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performAjaxSearch();
+            }
+        });
 
         window.addEventListener('pageshow', function(event) {
             if (loader) loader.style.display = 'none';

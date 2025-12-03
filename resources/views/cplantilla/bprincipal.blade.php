@@ -951,8 +951,8 @@
                             <li class="nav-item active mb-2">
                                 <a data-toggle="collapse" href="#Personal" class="collapsed" aria-expanded="false"
                                     style="background-color: #a9a97d !important; border-color: #ccc; color: #333;">
-                                    <i class="fas fa-grip-horizontal" style="color: white;"></i>
-                                    <p>Plana Docente</p>
+                                    <i class="fas fa-users-cog" style="color: #333;"></i>
+                                    <p>Gestión de Personal</p>
                                     <span class="caret"></span>
                                 </a>
 
@@ -961,8 +961,18 @@
                                     <ul class="nav nav-collapse">
 
                                         <li>
-                                            <a href="{{ route('registrardocente.index') }}" class="evitar-recarga">
+                                            <a href="{{ route('docentes.index') }}" class="evitar-recarga">
                                                 <span class="sub-item">Docentes</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('estudiantes.index') }}" class="evitar-recarga">
+                                                <span class="sub-item">Estudiantes</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{{ route('secretarias.index') }}" class="evitar-recarga">
+                                                <span class="sub-item">Secretarias</span>
                                             </a>
                                         </li>
                                     </ul>

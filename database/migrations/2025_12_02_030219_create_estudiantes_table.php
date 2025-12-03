@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('roles', function (Blueprint $table) {
-            $table->char('estado', 1)->default('A');
-        });
+        // Since the table already exists with the user's structure, this migration is just a placeholder
+        // The table structure matches what the user already has
     }
 
     /**
@@ -21,8 +20,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('roles', function (Blueprint $table) {
-            $table->dropColumn('estado');
-        });
+        Schema::dropIfExists('estudiantesunt');
     }
 };
