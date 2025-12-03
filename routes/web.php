@@ -29,6 +29,9 @@ use App\Http\Controllers\UsuariosController;
 use App\Http\Controllers\PersonasController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\AsignacionRolesController;
+use App\Http\Controllers\DocentesController;
+use App\Http\Controllers\EstudiantesController;
+use App\Http\Controllers\SecretariasController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/pagos/preferencia', [InfPagoController::class, 'crearPreferencia'])->name('pagos.crearPreferencia');
@@ -45,6 +48,9 @@ Route::get('/personas/verificar-dni', [PersonasController::class, 'verificarDni'
 
 // Verificación de Email (disponible sin autenticación)
 Route::get('/personas/verificar-email', [PersonasController::class, 'verificarEmail'])->name('personas.verificarEmail');
+
+// Verificación de Email Universitario (disponible sin autenticación)
+Route::get('/personas/verificar-email-universitario', [PersonasController::class, 'verificarEmailUniversitario'])->name('personas.verificarEmailUniversitario');
 
 Route::get('auth/google', [SocialAuthController::class, 'redirectToGoogle'])->name('google.login');
 Route::get('auth/google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
@@ -331,12 +337,22 @@ Route::middleware(['auth'])->group(function () {
     // Asignación de Roles - Solo para Administradores y Secretarias
     Route::prefix('asignacion-roles')->name('asignacion-roles.')->group(function () {
         Route::get('/', [AsignacionRolesController::class, 'index'])->name('index');
+        Route::post('/ajax-search', [AsignacionRolesController::class, 'ajaxSearch'])->name('ajax-search');
         Route::post('/asignar', [AsignacionRolesController::class, 'asignarRoles'])->name('asignar');
         Route::get('/resultados', [AsignacionRolesController::class, 'resultados'])->name('resultados');
+        Route::get('/get-form/{roleId}/{personaId}', [AsignacionRolesController::class, 'getForm'])->name('get-form');
+        Route::post('/save-config', [AsignacionRolesController::class, 'saveConfig'])->name('save-config');
+        Route::post('/asignar-rol', [AsignacionRolesController::class, 'asignarRol'])->name('asignar-rol');
+        Route::post('/desasignar-rol', [AsignacionRolesController::class, 'desasignarRol'])->name('desasignar-rol');
     });
 
     // Cambio de rol activo para usuarios con múltiples roles
     Route::post('/cambiar-rol-activo', [UsuariosController::class, 'cambiarRolActivo'])->name('cambiar.rol.activo');
+
+    // Gestión de Docentes, Estudiantes y Secretarias
+    Route::resource('/docentes', DocentesController::class);
+    Route::resource('/estudiantes', EstudiantesController::class);
+    Route::resource('/secretarias', SecretariasController::class);
 });
 Route::get('/', [UserController::class, 'showLogin'])->name('login');
 Route::get('/pass', [UserController::class, 'showLoginPassword'])->name('pass');
