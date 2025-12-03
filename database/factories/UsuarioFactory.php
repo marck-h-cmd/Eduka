@@ -7,11 +7,11 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Usuario>
  */
-class UserFactory extends Factory
+class UsuarioFactory extends Factory
 {
-    
+
     /**
      * Define the model's default state.
      *
@@ -20,11 +20,10 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->name(),
+            'username' => $this->faker->userName(),
             'email' => $this->faker->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => '$2y$12$N9Kq8lyH35AxhWq4yflCBOssl0F8XHG6pEuhZJhAbnklnw772RMm2', //password
-            'remember_token' => Str::random(10),
+            'password_hash' => '$2y$12$N9Kq8lyH35AxhWq4yflCBOssl0F8XHG6pEuhZJhAbnklnw772RMm2', //password
+            'estado' => 'Activo',
         ];
     }
 

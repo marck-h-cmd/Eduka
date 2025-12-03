@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
+use App\Models\Usuario;
 use DateTime;
 use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Support\Facades\Http;
@@ -73,7 +73,7 @@ class UserController extends Controller
 
         $email = $data['email'];
 
-        $usuario = User::where('email', $email)
+        $usuario = Usuario::where('email', $email)
             ->orWhere('username', $email)
             ->first();
 
@@ -125,7 +125,7 @@ class UserController extends Controller
         }
 
         // Buscar al usuario
-        $usuario = User::where('email', $email)->first();
+        $usuario = Usuario::where('email', $email)->first();
 
         if (!$usuario) {
             return redirect()->route('login')->withErrors(['email' => 'El usuario no fue encontrado.']);
