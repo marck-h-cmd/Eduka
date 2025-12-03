@@ -547,7 +547,7 @@
                                                         </div>
                                                     </a>
                                                     <a class="col-6 col-md-4 p-0"
-                                                        href="{{ route('estudiante.index') }}">
+                                                        href="{{ route('estudiantes.index') }}">
                                                         <div class="quick-actions-item">
                                                             <i class="flaticon-user-1"></i>
                                                             <span class="text">Registrar Estudiantes</span>
@@ -934,7 +934,7 @@
 
                                     <ul class="nav nav-collapse">
                                         <li>
-                                            <a href="{{ route('estudiante.index') }}" class="evitar-recarga">
+                                            <a href="{{ route('estudiantes.index') }}" class="evitar-recarga">
                                                 <span class="sub-item">Estudiantes</span>
                                             </a>
                                         </li>
