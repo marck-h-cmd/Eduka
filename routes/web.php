@@ -77,7 +77,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/verificar-dni', [InfEstudianteController::class, 'verificarDni'])->name('verificar.dni');
     Route::get('/verificar-dni-representante', [InfRepresentanteController::class, 'verificarDniRepresentante'])->name('verificar.dnirepresentante');
 
-    Route::resource('/docente', InfDocenteController::class);
+    // Route::resource('/docentes', InfDocenteController::class);
     Route::get('/verificar-dni-docente', [InfDocenteController::class, 'verificarDniDocente'])->name('verificar.dni.docente');
 
     Route::get('/registrodocente', [InfDocenteController::class, 'index'])->name('registrardocente.index');
