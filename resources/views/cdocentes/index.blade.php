@@ -51,11 +51,11 @@
                 <div class="collapse show" id="collapseExample0">
                     <div class="card card-body rounded-0 border-0 pt-0 pb-2" style="background-color: #fcfffc !important">
                         <div class="row align-items-center">
-                            <div class="col-md-6 mb-md-0 d-flex justify-content-start">
+                            {{-- <div class="col-md-6 mb-md-0 d-flex justify-content-start">
                                 <a href="{{ route('docentes.create') }}" class="btn btn-primary w-100" id="nuevoRegistroBtn" style="background: #007bff !important; border: none;">
                                     <i class="fa fa-plus mx-2"></i> Nuevo Docente
                                 </a>
-                            </div>
+                            </div> --}}
                             <div class="col-md-6 d-flex justify-content-md-end justify-content-start estilo-info">
                                 <form id="formBuscar" method="GET" class="w-100" style="max-width: 100%;">
                                     <div class="input-group">
