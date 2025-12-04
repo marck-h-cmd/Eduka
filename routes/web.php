@@ -80,7 +80,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/buscar-representante', [InfRepresentanteController::class, 'buscarPorDni'])->name('buscar.representante');
     Route::post('/asignar-representante', [InfRepresentanteController::class, 'asignarRepresentante'])->name('asignar.representante');
 
-    Route::get('/verificar-dni', [InfEstudianteController::class, 'verificarDni'])->name('verificar.dni');
+
     Route::get('/verificar-dni-representante', [InfRepresentanteController::class, 'verificarDniRepresentante'])->name('verificar.dnirepresentante');
 
     // Route::resource('/docentes', InfDocenteController::class);
@@ -376,7 +376,7 @@ Route::post('/password', [UserController::class, 'verificapassword'])->name('pas
 
 Route::post('/send-email', [ContactoController::class, 'send'])->name('send.email');
 
-Route::get('/estudiantes/{id}/ficha', [InfEstudianteController::class, 'generarFicha'])->name('estudiantes.ficha');
+
 
 // Procesos
 Route::resource('/procesos', ProcesoController::class);
