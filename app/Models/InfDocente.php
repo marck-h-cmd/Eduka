@@ -8,13 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class InfDocente extends Model
 {
     use HasFactory;
-    protected $table = 'profesores';
-    protected $primaryKey = 'profesor_id';
-    public $timestamps=false;
-    protected $fillable=['dni','nombres','apellidos','fecha_nacimiento','genero','direccion','telefono','email','especialidad','fecha_contratacion','estado','foto_url'];
+    protected $table = 'docentes';
+    protected $primaryKey = 'id_docente';
+    public $timestamps = false;
+    protected $fillable = ['id_persona', 'especialidad', 'fecha_contratacion', 'estado'];
 
-    public function cursos()
+    public function persona()
     {
-        return $this->hasMany('App\Models\InfCurso', 'profesor_principal_id', 'profesor_id');
+        return $this->belongsTo(Persona::class, 'id_persona', 'id_persona');
     }
 }

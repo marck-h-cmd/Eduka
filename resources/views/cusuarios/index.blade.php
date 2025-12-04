@@ -30,7 +30,7 @@
                     data-toggle="collapse" data-target="#collapseExample0" aria-expanded="true"
                     aria-controls="collapseExample"
                     style="background: #0A8CB3 !important; font-weight: bold; color: white;">
-                    <i class="fas fa-users m-1"></i>&nbsp;Registro y listado de usuarios
+                    <i class="fas fa-users m-1"></i>&nbsp;Gestión de Usuarios
                     <div class="float-right"><i class="fas fa-chevron-down"></i></div>
                 </button>
                 <div class="card-body info">
@@ -67,14 +67,7 @@
                                 </form>
                             </div>
                         </div>
-                        @if (session('datos'))
-                            <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
-                                {{ session('datos') }}
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                        @endif
+                        <div id="alerts-container"></div>
                         <div class="row form-bordered align-items-center"></div>
                         <div class="table-responsive mt-2">
                             <table class="table-hover table table-custom text-center" style="border: 1px solid #0A8CB3; border-radius: 10px; overflow: hidden;">
@@ -82,36 +75,56 @@
                                     <tr>
                                         <th scope="col">ID</th>
                                         <th scope="col">Usuario</th>
-                                        <th scope="col">Nombres</th>
-                                        <th scope="col">Apellidos</th>
+                                        <th scope="col">Persona</th>
                                         <th scope="col">Email</th>
-                                        <th scope="col">Rol</th>
+                                        <th scope="col">Roles</th>
                                         <th scope="col">Estado</th>
-                                        <th scope="col">Última Sesión</th>
                                         <th scope="col">Opciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($usuarios as $usuario)
+                                    @forelse($usuarios as $usuario)
                                         <tr>
-                                            <td>{{ $usuario->usuario_id }}</td>
+                                            <td>{{ $usuario->id_usuario }}</td>
                                             <td>{{ $usuario->username }}</td>
-                                            <td>{{ $usuario->nombres }}</td>
-                                            <td>{{ $usuario->apellidos }}</td>
+                                            <td>{{ $usuario->persona->nombres }} {{ $usuario->persona->apellidos }}</td>
                                             <td>{{ $usuario->email }}</td>
-                                            <td>{{ $usuario->rol }}</td>
-                                            <td>{{ $usuario->estado }}</td>
-                                            <td>{{ $usuario->ultima_sesion }}</td>
+                                            <td>
+                                                @if($usuario->persona->roles->count() > 0)
+                                                    @foreach($usuario->persona->roles as $rol)
+                                                        <span class="badge badge-info mr-1">{{ $rol->nombre }}</span>
+                                                    @endforeach
+                                                @else
+                                                    <span class="badge badge-secondary">Sin roles</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-{{ $usuario->estado == 'Activo' ? 'success' : 'danger' }}">
+                                                    {{ $usuario->estado }}
+                                                </span>
+                                            </td>
                                             <td class="btn-action-group">
-                                                <a href="{{ route('usuarios.edit', $usuario->usuario_id) }}" class="btn btn-link btn-sm p-0 btn-editar-usuario" title="Editar">
+                                                <a href="{{ route('usuarios.show', $usuario->id_usuario) }}" class="btn btn-link btn-sm p-0" title="Ver">
+                                                    <i class="fas fa-eye" style="color: #17a2b8; font-size: 1.2rem;"></i>
+                                                </a>
+                                                <a href="{{ route('usuarios.edit', $usuario->id_usuario) }}" class="btn btn-link btn-sm p-0 btn-editar-usuario" title="Editar">
                                                     <i class="fas fa-pen" style="color: #007bff; font-size: 1.2rem;"></i>
                                                 </a>
-                                                <a href="{{ route('usuarios.confirmar', $usuario->usuario_id) }}" class="btn btn-link btn-sm p-0 btn-eliminar-usuario" title="Eliminar">
+                                                <button type="button" class="btn btn-link btn-sm p-0 btn-eliminar-usuario" title="Eliminar"
+                                                        onclick="confirmarEliminar({{ $usuario->id_usuario }}, '{{ $usuario->username }}')">
                                                     <i class="fas fa-times" style="color: #dc3545; font-size: 1.3rem;"></i>
-                                                </a>
+                                                </button>
+                                                <form id="delete-form-{{ $usuario->id_usuario }}" action="{{ route('usuarios.destroy', $usuario->id_usuario) }}" method="POST" class="d-none">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                </form>
                                             </td>
                                         </tr>
-                                    @endforeach
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="text-center">No hay usuarios registrados.</td>
+                                        </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
@@ -126,11 +139,34 @@
 </div>
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // Función para confirmar eliminación con SweetAlert2 (global)
+    function confirmarEliminar(usuarioId, username) {
+        Swal.fire({
+            title: '¿Está seguro?',
+            text: `¿Desea cambiar el estado del usuario "${username}" a Inactivo?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, cambiar estado',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Enviar el formulario de eliminación
+                const form = document.getElementById(`delete-form-${usuarioId}`);
+                if (form) {
+                    form.submit();
+                }
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const loader = document.getElementById('loaderPrincipal');
         const contenido = document.getElementById('contenido-principal');
         if (loader) loader.style.display = 'none';
         if (contenido) contenido.style.opacity = '1';
+
         // Loader para ir a create (Nuevo Usuario)
         const nuevoRegistroBtn = document.getElementById('nuevoRegistroBtn');
         if (nuevoRegistroBtn) {
@@ -144,19 +180,20 @@
                 }, 800);
             });
         }
-        document.getElementById('formBuscar').addEventListener('submit', function(e) {
-            e.preventDefault();
-            if (loader) {
-                loader.style.display = 'flex';
-            }
-            const valor = document.getElementById('inputBuscar').value.trim();
-            fetch(`{{ route('usuarios.index') }}?buscarpor=${encodeURIComponent(valor)}`)
-                .then(response => response.text())
-                .then(data => {
-                    document.getElementById('tabla-usuarios').innerHTML = data;
-                    if (loader) loader.style.display = 'none';
-                });
+
+        // Loader para ver
+        document.querySelectorAll('.btn-ver-usuario').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (loader) {
+                    loader.style.display = 'flex';
+                }
+                setTimeout(() => {
+                    window.location.href = this.href;
+                }, 800);
+            });
         });
+
         // Loader para editar
         document.querySelectorAll('.btn-editar-usuario').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
@@ -169,18 +206,30 @@
                 }, 800);
             });
         });
-        // Loader para eliminar (confirmar)
-        document.querySelectorAll('.btn-eliminar-usuario').forEach(function(btn) {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (loader) {
-                    loader.style.display = 'flex';
-                }
-                setTimeout(() => {
-                    window.location.href = this.href;
-                }, 800);
+
+        // Nota: El botón de eliminar no usa loader porque muestra confirmación primero
+
+        // Mostrar mensajes de éxito o error con SweetAlert2
+        @if (session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: '¡Éxito!',
+                text: '{{ session("success") }}',
+                confirmButtonColor: '#007bff',
+                timer: 3000,
+                timerProgressBar: true
             });
-        });
+        @endif
+
+        @if (session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: '{{ session("error") }}',
+                confirmButtonColor: '#007bff'
+            });
+        @endif
+
         window.addEventListener('pageshow', function(event) {
             if (loader) loader.style.display = 'none';
             if (contenido) contenido.style.opacity = '1';
