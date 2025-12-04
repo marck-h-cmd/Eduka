@@ -1106,6 +1106,69 @@
                                     </ul>
                                 </div>
                             </li>
+                            <li class="nav-item active mb-2">
+                                <a data-toggle="collapse" href="#Tramites" class="collapsed" aria-expanded="false"
+                                    style="background-color: #a9a97d !important; border-color: #ccc; color: #333;">
+                                    <i class="fas fa-folder-open" style="color: white;"></i>
+                                    <p>Gestión de Trámites</p>
+                                    <span class="caret"></span>
+                                </a>
+                                <div class="collapse" id="Tramites">
+                                    <ul class="nav nav-collapse">
+                                        <li>
+                                            <a data-toggle="collapse" href="#ConfigTramites" class="collapsed" aria-expanded="false">
+                                                <span class="sub-item"><i class="fas fa-cogs mr-1"></i> Configuración</span>
+                                            </a>
+                                            <div class="collapse" id="ConfigTramites">
+                                                <ul class="nav nav-collapse">
+                                                    <li>
+                                                        <a href="{{ route('procesos.index') }}">
+                                                            <span class="sub-item">Procesos</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="{{ route('pasos.index') }}">
+                                                            <span class="sub-item">Pasos</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="{{ route('proceso_pasos.index') }}">
+                                                            <span class="sub-item">Estructura del Proceso</span>
+                                                        </a>
+                                                    </li>
+
+                                                </ul>
+                                            </div>
+                                        </li>
+
+                                        <li>
+                                            <a data-toggle="collapse" href="#OperacionTramites" class="collapsed" aria-expanded="false">
+                                                <span class="sub-item"><i class="fas fa-tasks mr-1"></i> Gestión</span>
+                                            </a>
+                                            <div class="collapse" id="OperacionTramites">
+                                                <ul class="nav nav-collapse">
+                                                    <li>
+                                                        <a href="{{ route('estudiante_procesos.index') }}">
+                                                            <span class="sub-item">Expedientes</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="{{ route('estudiante_proceso_pasos.index') }}">
+                                                            <span class="sub-item">Avance por Paso</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="{{ route('documentos.index') }}">
+                                                            <span class="sub-item">Documentos</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
+
                         @endif
                     </ul>
                 </div>

@@ -33,6 +33,12 @@ use App\Http\Controllers\DocentesController;
 use App\Http\Controllers\EstudiantesController;
 use App\Http\Controllers\SecretariasController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProcesoController;
+use App\Http\Controllers\PasoController;
+use App\Http\Controllers\ProcesoPasoController;
+use App\Http\Controllers\EstudianteProcesoPasoController;
+use App\Http\Controllers\EstudianteProcesoController;
+use App\Http\Controllers\DocumentoProcesoController;
 
 Route::post('/pagos/preferencia', [InfPagoController::class, 'crearPreferencia'])->name('pagos.crearPreferencia');
 
@@ -369,3 +375,15 @@ Route::post('/identificacion', [UserController::class, 'verificalogin'])->name('
 Route::post('/password', [UserController::class, 'verificapassword'])->name('password');
 
 Route::post('/send-email', [ContactoController::class, 'send'])->name('send.email');
+
+Route::get('/estudiantes/{id}/ficha', [InfEstudianteController::class, 'generarFicha'])->name('estudiantes.ficha');
+
+// Procesos
+Route::resource('/procesos', ProcesoController::class);
+Route::resource('/pasos', PasoController::class);
+Route::resource('/proceso_pasos', ProcesoPasoController::class);
+Route::resource('/estudiante_proceso_pasos', EstudianteProcesoPasoController::class);
+Route::resource('/estudiante_procesos', EstudianteProcesoController::class);
+Route::resource('/documentos', DocumentoProcesoController::class);
+
+
