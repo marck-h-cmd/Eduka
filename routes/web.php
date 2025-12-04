@@ -69,7 +69,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/registrorepresentanteestudiante', [InfRepresentanteController::class, 'store'])->name('registrorepresentanteestudiante.store');
 
-    Route::resource('/estudiante', InfEstudianteController::class);
+    Route::resource('/estudiantes', EstudiantesController::class);
     Route::resource('/representante', InfRepresentanteController::class);
     Route::post('/buscar-representante', [InfRepresentanteController::class, 'buscarPorDni'])->name('buscar.representante');
     Route::post('/asignar-representante', [InfRepresentanteController::class, 'asignarRepresentante'])->name('asignar.representante');
@@ -369,5 +369,3 @@ Route::post('/identificacion', [UserController::class, 'verificalogin'])->name('
 Route::post('/password', [UserController::class, 'verificapassword'])->name('password');
 
 Route::post('/send-email', [ContactoController::class, 'send'])->name('send.email');
-
-Route::get('/estudiantes/{id}/ficha', [InfEstudianteController::class, 'generarFicha'])->name('estudiantes.ficha');

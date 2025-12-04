@@ -6,6 +6,8 @@ use App\Models\Estudiante;
 use App\Models\Persona;
 use App\Models\Rol;
 use App\Models\Usuario;
+use App\Models\Escuela;
+use App\Models\Curricula;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -13,15 +15,48 @@ class EstudiantesController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * Lista solo los estudiantes que tienen el rol "Estudiante" activo
      */
-    public function index()
+    public function index(Request $request)
     {
-        $estudiantes = Estudiante::with('persona')->where('estado', '!=', 'Inactivo')->paginate(10);
+        // Obtener parámetro de búsqueda
+        $buscar = $request->get('buscarpor');
+        
+        // Query base con relaciones - FILTRAR SOLO ESTUDIANTES CON ROL ACTIVO
+        $query = Estudiante::with(['persona.roles', 'escuela', 'curricula'])
+            ->where('estudiantesunt.estado', '!=', 'Inactivo')
+            // Filtrar solo personas que tienen el rol "Estudiante" activo
+            ->whereHas('persona.roles', function($q) {
+                $q->where('roles.nombre', 'Estudiante')
+                  ->where('persona_roles.estado', 'Activo');
+            });
+        
+        // Aplicar filtro de búsqueda si existe
+        if ($buscar) {
+            $query->where(function($q) use ($buscar) {
+                $q->whereHas('persona', function($subq) use ($buscar) {
+                    $subq->where('nombres', 'LIKE', "%{$buscar}%")
+                         ->orWhere('apellidos', 'LIKE', "%{$buscar}%")
+                         ->orWhere('dni', 'LIKE', "%{$buscar}%");
+                })
+                ->orWhere('emailUniversidad', 'LIKE', "%{$buscar}%");
+            });
+        }
+        
+        // Paginar resultados
+        $estudiantes = $query->paginate(10);
+        
+        // Mantener parámetro de búsqueda en la paginación
+        if ($buscar) {
+            $estudiantes->appends(['buscarpor' => $buscar]);
+        }
+        
         return view('cestudiantes.index', compact('estudiantes'));
     }
 
     /**
      * Show the form for creating a new resource.
+     * NOTA: Este método ya existe y es manejado por otro módulo
      */
     public function create()
     {
@@ -30,6 +65,7 @@ class EstudiantesController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     * NOTA: Este método ya existe y es manejado por otro módulo
      */
     public function store(Request $request)
     {
@@ -140,24 +176,45 @@ class EstudiantesController extends Controller
 
     /**
      * Display the specified resource.
+     * Muestra los detalles completos de un estudiante específico
      */
     public function show(Estudiante $estudiante)
     {
-        $estudiante->load('persona');
+        // Cargar todas las relaciones necesarias
+        $estudiante->load([
+            'persona.roles',
+            'persona.usuario',
+            'escuela',
+            'curricula'
+        ]);
+        
         return view('cestudiantes.show', compact('estudiante'));
     }
 
     /**
      * Show the form for editing the specified resource.
+     * Muestra el formulario de edición del estudiante
      */
     public function edit(Estudiante $estudiante)
     {
-        $estudiante->load('persona');
-        return view('cestudiantes.edit', compact('estudiante'));
+        // Cargar relaciones
+        $estudiante->load(['persona', 'escuela', 'curricula']);
+        
+        // Obtener escuelas y currículas activas para los selects
+        $escuelas = Escuela::where('estado', 'Activo')
+            ->orderBy('nombre')
+            ->get();
+            
+        $curriculas = Curricula::where('estado', 'Vigente')
+            ->orderBy('nombre')
+            ->get();
+        
+        return view('cestudiantes.edit', compact('estudiante', 'escuelas', 'curriculas'));
     }
 
     /**
      * Update the specified resource in storage.
+     * Actualiza los datos del estudiante
      */
     public function update(Request $request, Estudiante $estudiante)
     {
@@ -169,6 +226,7 @@ class EstudiantesController extends Controller
             $emailData['email'] = $request->email;
         }
 
+        // Validación con reglas específicas
         $validator = Validator::make($emailData, [
             'nombres' => 'required|string|max:100|regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/',
             'apellidos' => 'required|string|max:100|regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/',
@@ -182,8 +240,8 @@ class EstudiantesController extends Controller
             'anio_ingreso' => 'required|integer|min:1900|max:' . (date('Y') + 10),
             'anio_egreso' => 'nullable|integer|min:1900|max:' . (date('Y') + 20),
             'estado' => 'required|in:Activo,Egresado,Inactivo',
-            'id_escuela' => 'nullable|integer', // TODO: Add exists validation when escuelas table is created
-            'id_curricula' => 'nullable|integer', // TODO: Add exists validation when curricula table is created
+            'id_escuela' => 'nullable|integer|exists:escuelas,id_escuela',
+            'id_curricula' => 'nullable|integer|exists:curriculas,id_curricula',
         ], [
             'nombres.required' => 'El campo nombres es obligatorio.',
             'nombres.regex' => 'El campo nombres solo puede contener letras y espacios.',
@@ -215,6 +273,8 @@ class EstudiantesController extends Controller
             'anio_egreso.max' => 'El año de egreso no puede ser mayor a ' . (date('Y') + 20) . '.',
             'estado.required' => 'El estado es obligatorio.',
             'estado.in' => 'El estado debe ser Activo, Egresado o Inactivo.',
+            'id_escuela.exists' => 'La escuela seleccionada no es válida.',
+            'id_curricula.exists' => 'La currícula seleccionada no es válida.',
         ]);
 
         if ($validator->fails()) {
@@ -223,12 +283,12 @@ class EstudiantesController extends Controller
                 ->withInput();
         }
 
-        // Actualizar persona
+        // Actualizar datos de la persona
         $estudiante->persona->update(collect($emailData)->only([
             'nombres', 'apellidos', 'dni', 'telefono', 'email', 'genero', 'direccion', 'fecha_nacimiento'
         ])->toArray());
 
-        // Actualizar estudiante
+        // Actualizar datos específicos del estudiante
         $estudiante->update([
             'id_escuela' => $request->id_escuela,
             'id_curricula' => $request->id_curricula,
@@ -244,6 +304,7 @@ class EstudiantesController extends Controller
 
     /**
      * Remove the specified resource from storage.
+     * Cambia el estado del estudiante a Inactivo (soft delete)
      */
     public function destroy(Estudiante $estudiante)
     {
@@ -253,7 +314,10 @@ class EstudiantesController extends Controller
         // Desactivar el rol estudiante de la persona
         $rolEstudiante = Rol::where('nombre', 'Estudiante')->first();
         if ($rolEstudiante) {
-            $estudiante->persona->roles()->updateExistingPivot($rolEstudiante->id_rol, ['estado' => 'Inactivo']);
+            $estudiante->persona->roles()->updateExistingPivot(
+                $rolEstudiante->id_rol, 
+                ['estado' => 'Inactivo']
+            );
         }
 
         return redirect()->route('estudiantes.index')
