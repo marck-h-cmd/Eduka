@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             RolesSeeder::class,
+            EspecialidadesSeeder::class,
             PersonasSeeder::class,
         ]);
     }

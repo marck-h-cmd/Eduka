@@ -13,6 +13,14 @@ class UsuariosController extends Controller
 
     public function index(Request $request)
     {
+        // Verificar permisos basado en el rol ACTIVO actual
+        $user = auth()->user();
+        $currentRole = $user->getCurrentRole();
+
+        if (!$currentRole || !in_array($currentRole->nombre, ['Administrador', 'Secretaria'])) {
+            abort(403, 'No tienes permisos para acceder a esta sección.');
+        }
+
         $buscarpor = $request->get('buscarpor');
 
         $usuarios = Usuario::with(['persona.roles' => function($query) {
@@ -41,6 +49,14 @@ class UsuariosController extends Controller
 
     public function create()
     {
+        // Verificar permisos basado en el rol ACTIVO actual
+        $user = auth()->user();
+        $currentRole = $user->getCurrentRole();
+
+        if (!$currentRole || !in_array($currentRole->nombre, ['Administrador', 'Secretaria'])) {
+            abort(403, 'No tienes permisos para acceder a esta sección.');
+        }
+
         // Solo personas activas que tienen roles asignados
         $personas = Persona::with(['roles' => function($query) {
             $query->where('persona_roles.estado', 'Activo');
@@ -144,6 +160,14 @@ class UsuariosController extends Controller
 
     public function edit($id)
     {
+        // Verificar permisos basado en el rol ACTIVO actual
+        $user = auth()->user();
+        $currentRole = $user->getCurrentRole();
+
+        if (!$currentRole || !in_array($currentRole->nombre, ['Administrador', 'Secretaria'])) {
+            abort(403, 'No tienes permisos para acceder a esta sección.');
+        }
+
         $usuario = Usuario::with(['persona.roles' => function($query) {
             $query->where('persona_roles.estado', 'Activo');
         }])->findOrFail($id);
@@ -153,6 +177,14 @@ class UsuariosController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Verificar permisos basado en el rol ACTIVO actual
+        $user = auth()->user();
+        $currentRole = $user->getCurrentRole();
+
+        if (!$currentRole || !in_array($currentRole->nombre, ['Administrador', 'Secretaria'])) {
+            abort(403, 'No tienes permisos para acceder a esta sección.');
+        }
+
         $usuario = Usuario::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
@@ -204,6 +236,14 @@ class UsuariosController extends Controller
 
     public function destroy($id)
     {
+        // Verificar permisos basado en el rol ACTIVO actual
+        $user = auth()->user();
+        $currentRole = $user->getCurrentRole();
+
+        if (!$currentRole || !in_array($currentRole->nombre, ['Administrador', 'Secretaria'])) {
+            abort(403, 'No tienes permisos para acceder a esta sección.');
+        }
+
         $usuario = Usuario::findOrFail($id);
 
         // Cambiar el estado a "Inactivo" en lugar de eliminar
@@ -215,6 +255,14 @@ class UsuariosController extends Controller
 
     public function show($id)
     {
+        // Verificar permisos basado en el rol ACTIVO actual
+        $user = auth()->user();
+        $currentRole = $user->getCurrentRole();
+
+        if (!$currentRole || !in_array($currentRole->nombre, ['Administrador', 'Secretaria'])) {
+            abort(403, 'No tienes permisos para acceder a esta sección.');
+        }
+
         $usuario = Usuario::with(['persona.roles' => function($query) {
             $query->where('persona_roles.estado', 'Activo');
         }])->findOrFail($id);
@@ -224,10 +272,43 @@ class UsuariosController extends Controller
 
     public function confirmar($id)
     {
+        // Verificar permisos basado en el rol ACTIVO actual
+        $user = auth()->user();
+        $currentRole = $user->getCurrentRole();
+
+        if (!$currentRole || !in_array($currentRole->nombre, ['Administrador', 'Secretaria'])) {
+            abort(403, 'No tienes permisos para acceder a esta sección.');
+        }
+
         $usuario = Usuario::with(['persona.roles' => function($query) {
             $query->where('persona_roles.estado', 'Activo');
         }])->findOrFail($id);
 
         return view('cusuarios.confirmar', compact('usuario'));
+    }
+
+    /**
+     * Cambiar el rol activo del usuario actual
+     */
+    public function cambiarRolActivo(Request $request)
+    {
+        $request->validate([
+            'role_id' => 'required|exists:roles,id_rol',
+        ]);
+
+        $user = auth()->user();
+
+        if ($user->setCurrentRole($request->role_id)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Rol cambiado exitosamente',
+                'current_role' => $user->getCurrentRole()->nombre
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'No se pudo cambiar el rol'
+        ], 400);
     }
 }
