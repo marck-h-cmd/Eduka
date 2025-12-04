@@ -8,6 +8,7 @@ use App\Models\Rol;
 use App\Models\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class SecretariasController extends Controller
 {
@@ -22,58 +23,49 @@ class SecretariasController extends Controller
 
     /**
      * Show the form for creating a new resource.
+     * NOTA: Aquí "create" es en realidad "asignar rol de secretaria a una persona"
      */
     public function create()
     {
-        return view('csecretarias.create');
+        // Obtener personas que NO tienen rol de Secretaria
+        $personas = Persona::whereDoesntHave('roles', function($query) {
+            $query->where('nombre', 'Secretaria');
+        })
+        ->where('estado', 'Activo')
+        ->get()
+        ->map(function($persona) {
+            return [
+                'id_persona' => $persona->id_persona,
+                'nombre_completo' => $persona->nombres . ' ' . $persona->apellidos,
+                'dni' => $persona->dni,
+            ];
+        });
+
+        return view('csecretarias.create', compact('personas'));
     }
 
     /**
      * Store a newly created resource in storage.
+     * FLUJO CORRECTO:
+     * 1. Validar que la persona existe
+     * 2. Crear registro en tabla 'secretarias'
+     * 3. Asignar rol 'Secretaria' a la persona
+     * 4. Crear usuario automáticamente
+     * 5. Enviar credenciales por email
      */
     public function store(Request $request)
     {
-        // Combinar email si se proporcionaron username y domain
-        $emailData = $request->all();
-        if ($request->filled('email_username') && $request->filled('email_domain')) {
-            $emailData['email'] = $request->email_username . '@' . $request->email_domain;
-        } elseif ($request->filled('email')) {
-            $emailData['email'] = $request->email;
-        }
-
-        $validator = Validator::make($emailData, [
-            'nombres' => 'required|string|max:100|regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/',
-            'apellidos' => 'required|string|max:100|regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/',
-            'dni' => 'required|string|size:8|regex:/^[0-9]+$/|unique:personas,dni',
-            'telefono' => 'nullable|string|size:9|regex:/^[0-9]+$/',
-            'email' => 'nullable|email|max:100|unique:personas,email|regex:/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/',
-            'genero' => 'nullable|in:M,F,Otro',
-            'direccion' => 'nullable|string|max:255',
-            'fecha_nacimiento' => 'nullable|date|before:today',
-            'emailUniversidad' => 'required|string|max:100|unique:secretarias,emailUniversidad',
+        $validator = Validator::make($request->all(), [
+            'id_persona' => 'required|exists:personas,id_persona|unique:secretarias,id_persona',
+            'emailUniversidad' => 'required|string|max:100|unique:secretarias,emailUniversidad|email',
             'fecha_ingreso' => 'nullable|date',
         ], [
-            'nombres.required' => 'El campo nombres es obligatorio.',
-            'nombres.regex' => 'El campo nombres solo puede contener letras y espacios.',
-            'nombres.max' => 'El campo nombres no puede tener más de 100 caracteres.',
-            'apellidos.required' => 'El campo apellidos es obligatorio.',
-            'apellidos.regex' => 'El campo apellidos solo puede contener letras y espacios.',
-            'apellidos.max' => 'El campo apellidos no puede tener más de 100 caracteres.',
-            'dni.required' => 'El campo DNI es obligatorio.',
-            'dni.size' => 'El DNI debe contener exactamente 8 dígitos.',
-            'dni.regex' => 'El DNI solo puede contener números.',
-            'dni.unique' => 'El DNI ya está registrado.',
-            'telefono.size' => 'El teléfono debe contener exactamente 9 dígitos.',
-            'telefono.regex' => 'El teléfono solo puede contener números.',
-            'email.email' => 'El campo email debe ser una dirección de correo electrónico válida.',
-            'email.regex' => 'El formato del email no es válido.',
-            'email.unique' => 'El email ya está registrado.',
-            'email.max' => 'El campo email no puede tener más de 100 caracteres.',
-            'direccion.max' => 'El campo dirección no puede tener más de 255 caracteres.',
-            'fecha_nacimiento.date' => 'El campo fecha de nacimiento debe ser una fecha válida.',
-            'fecha_nacimiento.before' => 'La fecha de nacimiento no puede ser futura.',
+            'id_persona.required' => 'Debe seleccionar una persona.',
+            'id_persona.exists' => 'La persona seleccionada no existe.',
+            'id_persona.unique' => 'Esta persona ya tiene asignado el rol de Secretaria.',
             'emailUniversidad.required' => 'El email universitario es obligatorio.',
             'emailUniversidad.unique' => 'El email universitario ya está registrado.',
+            'emailUniversidad.email' => 'El formato del email no es válido.',
             'fecha_ingreso.date' => 'La fecha de ingreso debe ser una fecha válida.',
         ]);
 
@@ -83,47 +75,65 @@ class SecretariasController extends Controller
                 ->withInput();
         }
 
-        // Crear persona
-        $persona = Persona::create(collect($emailData)->only([
-            'nombres', 'apellidos', 'dni', 'telefono', 'email', 'genero', 'direccion', 'fecha_nacimiento'
-        ])->merge(['estado' => 'Activo'])->toArray());
+        DB::beginTransaction();
+        try {
+            $persona = Persona::findOrFail($request->id_persona);
 
-        // Crear registro secretaria
-        $secretaria = Secretaria::create([
-            'id_persona' => $persona->id_persona,
-            'emailUniversidad' => $request->emailUniversidad,
-            'fecha_ingreso' => $request->fecha_ingreso,
-            'estado' => 'Activo',
-        ]);
+            // 1. Crear registro en tabla secretarias
+            $secretaria = Secretaria::create([
+                'id_persona' => $persona->id_persona,
+                'emailUniversidad' => $request->emailUniversidad,
+                'fecha_ingreso' => $request->fecha_ingreso ?? now(),
+                'estado' => 'Activo',
+            ]);
 
-        // Asignar rol de secretaria
-        $rolSecretaria = Rol::where('nombre', 'Secretaria')->first();
-        if ($rolSecretaria) {
-            $persona->roles()->syncWithoutDetaching([$rolSecretaria->id_rol => ['estado' => 'Activo']]);
-        }
-
-        // Crear usuario automáticamente
-        $resultadoCreacion = Usuario::crearUsuarioAutomatico($persona);
-        $credencialesUsuario = $resultadoCreacion['credenciales'];
-
-        $mensaje = 'Secretaria creada exitosamente.';
-        if ($credencialesUsuario) {
-            $mensaje .= ' Credenciales creadas: Usuario: ' . $credencialesUsuario['username'] . ', Email: ' . $credencialesUsuario['email'] . '. Las credenciales han sido enviadas por email.';
-
-            // Enviar email específico para secretaria
-            try {
-                \Mail::to($credencialesUsuario['email'])->send(new \App\Mail\EnviarCredencialesSecretaria(
-                    $persona->nombres . ' ' . $persona->apellidos,
-                    $credencialesUsuario['email'],
-                    $credencialesUsuario['password']
-                ));
-            } catch (\Exception $e) {
-                \Log::error('Error sending secretaria credentials email: ' . $e->getMessage());
+            // 2. Asignar rol de secretaria
+            $rolSecretaria = Rol::where('nombre', 'Secretaria')->first();
+            if ($rolSecretaria) {
+                $persona->roles()->syncWithoutDetaching([
+                    $rolSecretaria->id_rol => ['estado' => 'Activo']
+                ]);
             }
-        }
 
-        return redirect()->route('secretarias.index')
-            ->with('success', $mensaje);
+            // 3. Crear usuario automáticamente (AQUÍ es donde se crea)
+            $resultadoCreacion = Usuario::crearUsuarioAutomatico($persona);
+            $credencialesUsuario = $resultadoCreacion['credenciales'];
+
+            $mensaje = 'Secretaria asignada exitosamente.';
+            
+            // 4. Enviar credenciales por email
+            if ($credencialesUsuario) {
+                $mensaje .= ' Credenciales creadas: Usuario: ' . $credencialesUsuario['username'] . 
+                           ', Email: ' . $credencialesUsuario['email'] . 
+                           '. Las credenciales han sido enviadas por email.';
+
+                try {
+                    \Mail::to($credencialesUsuario['email'])->send(
+                        new \App\Mail\EnviarCredencialesSecretaria(
+                            $persona->nombres . ' ' . $persona->apellidos,
+                            $credencialesUsuario['email'],
+                            $credencialesUsuario['password']
+                        )
+                    );
+                } catch (\Exception $e) {
+                    \Log::error('Error sending secretaria credentials email: ' . $e->getMessage());
+                    $mensaje .= ' Nota: Hubo un error al enviar el email, pero el usuario fue creado correctamente.';
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('secretarias.index')
+                ->with('success', $mensaje);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error al asignar secretaria: ' . $e->getMessage());
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al asignar secretaria: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -131,7 +141,7 @@ class SecretariasController extends Controller
      */
     public function show(Secretaria $secretaria)
     {
-        $secretaria->load('persona');
+        $secretaria->load('persona.usuario', 'persona.roles');
         return view('csecretarias.show', compact('secretaria'));
     }
 
@@ -149,48 +159,14 @@ class SecretariasController extends Controller
      */
     public function update(Request $request, Secretaria $secretaria)
     {
-        // Combinar email si se proporcionaron username y domain
-        $emailData = $request->all();
-        if ($request->filled('email_username') && $request->filled('email_domain')) {
-            $emailData['email'] = $request->email_username . '@' . $request->email_domain;
-        } elseif ($request->filled('email')) {
-            $emailData['email'] = $request->email;
-        }
-
-        $validator = Validator::make($emailData, [
-            'nombres' => 'required|string|max:100|regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/',
-            'apellidos' => 'required|string|max:100|regex:/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/',
-            'dni' => 'required|string|size:8|regex:/^[0-9]+$/|unique:personas,dni,' . $secretaria->persona->id_persona . ',id_persona',
-            'telefono' => 'nullable|string|size:9|regex:/^[0-9]+$/',
-            'email' => 'nullable|email|max:100|unique:personas,email,' . $secretaria->persona->id_persona . ',id_persona|regex:/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/',
-            'genero' => 'nullable|in:M,F,Otro',
-            'direccion' => 'nullable|string|max:255',
-            'fecha_nacimiento' => 'nullable|date|before:today',
-            'emailUniversidad' => 'required|string|max:100|unique:secretarias,emailUniversidad,' . $secretaria->id_secretaria . ',id_secretaria',
+        $validator = Validator::make($request->all(), [
+            'emailUniversidad' => 'required|string|max:100|email|unique:secretarias,emailUniversidad,' . $secretaria->id_secretaria . ',id_secretaria',
             'fecha_ingreso' => 'nullable|date',
             'estado' => 'required|in:Activo,Inactivo',
         ], [
-            'nombres.required' => 'El campo nombres es obligatorio.',
-            'nombres.regex' => 'El campo nombres solo puede contener letras y espacios.',
-            'nombres.max' => 'El campo nombres no puede tener más de 100 caracteres.',
-            'apellidos.required' => 'El campo apellidos es obligatorio.',
-            'apellidos.regex' => 'El campo apellidos solo puede contener letras y espacios.',
-            'apellidos.max' => 'El campo apellidos no puede tener más de 100 caracteres.',
-            'dni.required' => 'El campo DNI es obligatorio.',
-            'dni.size' => 'El DNI debe contener exactamente 8 dígitos.',
-            'dni.regex' => 'El DNI solo puede contener números.',
-            'dni.unique' => 'El DNI ya está registrado.',
-            'telefono.size' => 'El teléfono debe contener exactamente 9 dígitos.',
-            'telefono.regex' => 'El teléfono solo puede contener números.',
-            'email.email' => 'El campo email debe ser una dirección de correo electrónico válida.',
-            'email.regex' => 'El formato del email no es válido.',
-            'email.unique' => 'El email ya está registrado.',
-            'email.max' => 'El campo email no puede tener más de 100 caracteres.',
-            'direccion.max' => 'El campo dirección no puede tener más de 255 caracteres.',
-            'fecha_nacimiento.date' => 'El campo fecha de nacimiento debe ser una fecha válida.',
-            'fecha_nacimiento.before' => 'La fecha de nacimiento no puede ser futura.',
             'emailUniversidad.required' => 'El email universitario es obligatorio.',
             'emailUniversidad.unique' => 'El email universitario ya está registrado.',
+            'emailUniversidad.email' => 'El formato del email no es válido.',
             'fecha_ingreso.date' => 'La fecha de ingreso debe ser una fecha válida.',
             'estado.required' => 'El estado es obligatorio.',
             'estado.in' => 'El estado debe ser Activo o Inactivo.',
@@ -202,20 +178,45 @@ class SecretariasController extends Controller
                 ->withInput();
         }
 
-        // Actualizar persona
-        $secretaria->persona->update(collect($emailData)->only([
-            'nombres', 'apellidos', 'dni', 'telefono', 'email', 'genero', 'direccion', 'fecha_nacimiento'
-        ])->toArray());
+        DB::beginTransaction();
+        try {
+            // Actualizar secretaria
+            $secretaria->update([
+                'emailUniversidad' => $request->emailUniversidad,
+                'fecha_ingreso' => $request->fecha_ingreso,
+                'estado' => $request->estado,
+            ]);
 
-        // Actualizar secretaria
-        $secretaria->update([
-            'emailUniversidad' => $request->emailUniversidad,
-            'fecha_ingreso' => $request->fecha_ingreso,
-            'estado' => $request->estado,
-        ]);
+            // Actualizar email del usuario si existe
+            if ($secretaria->persona->usuario) {
+                $secretaria->persona->usuario->update([
+                    'email' => $request->emailUniversidad,
+                    'estado' => $request->estado,
+                ]);
+            }
 
-        return redirect()->route('secretarias.index')
-            ->with('success', 'Secretaria actualizada exitosamente.');
+            // Actualizar estado del rol
+            $rolSecretaria = Rol::where('nombre', 'Secretaria')->first();
+            if ($rolSecretaria) {
+                $secretaria->persona->roles()->updateExistingPivot(
+                    $rolSecretaria->id_rol, 
+                    ['estado' => $request->estado]
+                );
+            }
+
+            DB::commit();
+
+            return redirect()->route('secretarias.index')
+                ->with('success', 'Secretaria actualizada exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error al actualizar secretaria: ' . $e->getMessage());
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Error al actualizar secretaria: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -223,16 +224,36 @@ class SecretariasController extends Controller
      */
     public function destroy(Secretaria $secretaria)
     {
-        // Cambiar estado de la secretaria a Inactivo
-        $secretaria->update(['estado' => 'Inactivo']);
+        DB::beginTransaction();
+        try {
+            // Cambiar estado de la secretaria a Inactivo
+            $secretaria->update(['estado' => 'Inactivo']);
 
-        // Desactivar el rol secretaria de la persona
-        $rolSecretaria = Rol::where('nombre', 'Secretaria')->first();
-        if ($rolSecretaria) {
-            $secretaria->persona->roles()->updateExistingPivot($rolSecretaria->id_rol, ['estado' => 'Inactivo']);
+            // Desactivar el usuario asociado
+            if ($secretaria->persona->usuario) {
+                $secretaria->persona->usuario->update(['estado' => 'Inactivo']);
+            }
+
+            // Desactivar el rol secretaria de la persona
+            $rolSecretaria = Rol::where('nombre', 'Secretaria')->first();
+            if ($rolSecretaria) {
+                $secretaria->persona->roles()->updateExistingPivot(
+                    $rolSecretaria->id_rol, 
+                    ['estado' => 'Inactivo']
+                );
+            }
+
+            DB::commit();
+
+            return redirect()->route('secretarias.index')
+                ->with('success', 'Secretaria desactivada exitosamente.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error al desactivar secretaria: ' . $e->getMessage());
+            
+            return redirect()->back()
+                ->with('error', 'Error al desactivar secretaria: ' . $e->getMessage());
         }
-
-        return redirect()->route('secretarias.index')
-            ->with('success', 'Secretaria dada de baja exitosamente.');
     }
 }
