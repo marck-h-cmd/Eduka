@@ -33,6 +33,12 @@ use App\Http\Controllers\DocentesController;
 use App\Http\Controllers\EstudiantesController;
 use App\Http\Controllers\SecretariasController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProcesoController;
+use App\Http\Controllers\PasoController;
+use App\Http\Controllers\ProcesoPasoController;
+use App\Http\Controllers\EstudianteProcesoPasoController;
+use App\Http\Controllers\EstudianteProcesoController;
+use App\Http\Controllers\DocumentoProcesoController;
 
 Route::post('/pagos/preferencia', [InfPagoController::class, 'crearPreferencia'])->name('pagos.crearPreferencia');
 
@@ -69,15 +75,15 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/registrorepresentanteestudiante', [InfRepresentanteController::class, 'store'])->name('registrorepresentanteestudiante.store');
 
-    Route::resource('/estudiante', InfEstudianteController::class);
+    Route::resource('/estudiantes', EstudiantesController::class);
     Route::resource('/representante', InfRepresentanteController::class);
     Route::post('/buscar-representante', [InfRepresentanteController::class, 'buscarPorDni'])->name('buscar.representante');
     Route::post('/asignar-representante', [InfRepresentanteController::class, 'asignarRepresentante'])->name('asignar.representante');
 
-    Route::get('/verificar-dni', [InfEstudianteController::class, 'verificarDni'])->name('verificar.dni');
+
     Route::get('/verificar-dni-representante', [InfRepresentanteController::class, 'verificarDniRepresentante'])->name('verificar.dnirepresentante');
 
-    Route::resource('/docente', InfDocenteController::class);
+    // Route::resource('/docentes', InfDocenteController::class);
     Route::get('/verificar-dni-docente', [InfDocenteController::class, 'verificarDniDocente'])->name('verificar.dni.docente');
 
     Route::get('/registrodocente', [InfDocenteController::class, 'index'])->name('registrardocente.index');
@@ -370,4 +376,14 @@ Route::post('/password', [UserController::class, 'verificapassword'])->name('pas
 
 Route::post('/send-email', [ContactoController::class, 'send'])->name('send.email');
 
-Route::get('/estudiantes/{id}/ficha', [InfEstudianteController::class, 'generarFicha'])->name('estudiantes.ficha');
+
+
+// Procesos
+Route::resource('/procesos', ProcesoController::class);
+Route::resource('/pasos', PasoController::class);
+Route::resource('/proceso_pasos', ProcesoPasoController::class);
+Route::resource('/estudiante_proceso_pasos', EstudianteProcesoPasoController::class);
+Route::resource('/estudiante_procesos', EstudianteProcesoController::class);
+Route::resource('/documentos', DocumentoProcesoController::class);
+
+

@@ -17,7 +17,6 @@ class Docente extends Model
         'id_persona',
         'emailUniversidad',
         'fecha_contratacion',
-        'especialidad_id',
         'estado',
     ];
 

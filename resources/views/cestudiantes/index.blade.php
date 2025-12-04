@@ -1,5 +1,5 @@
 @extends('cplantilla.bprincipal')
-@section('titulo', 'Gestión de Docentes')
+@section('titulo', 'Gestión de Estudiantes')
 @section('contenidoplantilla')
 <style>
     .form-bordered { margin: 0; border: none; padding-top: 15px; padding-bottom: 15px; border-bottom: 1px dashed #eaedf1; }
@@ -30,7 +30,7 @@
                     data-toggle="collapse" data-target="#collapseExample0" aria-expanded="true"
                     aria-controls="collapseExample"
                     style="background: #0A8CB3 !important; font-weight: bold; color: white;">
-                    <i class="fas fa-chalkboard-teacher m-1"></i>&nbsp;Gestión de Docentes
+                    <i class="fas fa-user-graduate m-1"></i>&nbsp;Gestión de Estudiantes
                     <div class="float-right"><i class="fas fa-chevron-down"></i></div>
                 </button>
                 <div class="card-body info">
@@ -40,10 +40,10 @@
                         </div>
                         <div class="p-2 flex-fill">
                             <p>
-                                En esta sección, podrás gestionar los docentes del sistema, incluyendo su información personal y académica.
+                                En esta sección, podrás consultar y gestionar la información de los estudiantes registrados en el sistema.
                             </p>
                             <p>
-                                Estimado Usuario: Asegúrate de revisar cuidadosamente los datos antes de guardarlos, ya que esta información será utilizada para la gestión académica.
+                                Estimado Usuario: Puedes ver detalles completos, editar información académica y cambiar el estado de los estudiantes según sea necesario.
                             </p>
                         </div>
                     </div>
@@ -51,16 +51,20 @@
                 <div class="collapse show" id="collapseExample0">
                     <div class="card card-body rounded-0 border-0 pt-0 pb-2" style="background-color: #fcfffc !important">
                         <div class="row align-items-center">
-                            {{-- <div class="col-md-6 mb-md-0 d-flex justify-content-start">
-                                <a href="{{ route('docentes.create') }}" class="btn btn-primary w-100" id="nuevoRegistroBtn" style="background: #007bff !important; border: none;">
-                                    <i class="fa fa-plus mx-2"></i> Nuevo Docente
-                                </a>
-                            </div> --}}
-                            <div class="col-md-6 d-flex justify-content-md-end justify-content-start estilo-info">
-                                <form id="formBuscar" method="GET" class="w-100" style="max-width: 100%;">
+                            <div class="col-md-6 mb-md-0 d-flex justify-content-start">
+                                <!-- Nota: El botón de crear estudiante se mantiene para navegación, 
+                                     pero la creación es manejada por otro módulo -->
+                            </div>
+                            <div class="col-md-12 d-flex justify-content-md-end justify-content-start estilo-info">
+                                <form id="formBuscar" method="GET" action="{{ route('estudiantes.index') }}" class="w-100" style="max-width: 100%;">
                                     <div class="input-group">
-                                        <input name="buscarpor" id="inputBuscar" class="form-control mt-3" type="search" placeholder="Buscar docente" aria-label="Search" autocomplete="off" style="border-color: #007bff;">
-                                        <button class="btn btn-primary nuevo-boton" type="submit" style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; background: #007bff !important; border: none;">
+                                        <input name="buscarpor" id="inputBuscar" class="form-control mt-3" type="search" 
+                                               placeholder="Buscar estudiante (nombre, DNI, email universitario)" 
+                                               aria-label="Search" autocomplete="off" 
+                                               value="{{ request('buscarpor') }}"
+                                               style="border-color: #007bff;">
+                                        <button class="btn btn-primary nuevo-boton" type="submit" 
+                                                style="border-top-left-radius: 0 !important; border-bottom-left-radius: 0 !important; background: #007bff !important; border: none;">
                                             <i class="fas fa-search"></i>
                                         </button>
                                     </div>
@@ -77,55 +81,72 @@
                                         <th scope="col">Nombres</th>
                                         <th scope="col">Apellidos</th>
                                         <th scope="col">DNI</th>
-                                        <th scope="col">Especialidad</th>
-                                        <th scope="col">Email Universidad</th>
-                                        <th scope="col">Fecha Contratación</th>
+                                        <th scope="col">Email Universitario</th>
+                                        <th scope="col">Escuela</th>
+                                        <th scope="col">Año Ingreso</th>
+                                        <th scope="col">Roles</th>
                                         <th scope="col">Estado</th>
                                         <th scope="col">Opciones</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($docentes as $docente)
+                                    @forelse($estudiantes as $estudiante)
                                         <tr>
-                                            <td>{{ $docente->id_docente }}</td>
-                                            <td>{{ $docente->persona->nombres }}</td>
-                                            <td>{{ $docente->persona->apellidos }}</td>
-                                            <td>{{ $docente->persona->dni }}</td>
-                                            <td>{{ $docente->especialidad ?: 'No especificada' }}</td>
-                                            <td>{{ $docente->emailUniversidad }}</td>
-                                            <td>{{ $docente->fecha_contratacion ? \Carbon\Carbon::parse($docente->fecha_contratacion)->format('d/m/Y') : 'No especificada' }}</td>
+                                            <td>{{ $estudiante->id_estudiante }}</td>
+                                            <td>{{ $estudiante->persona->nombres }}</td>
+                                            <td>{{ $estudiante->persona->apellidos }}</td>
+                                            <td>{{ $estudiante->persona->dni }}</td>
+                                            <td>{{ $estudiante->emailUniversidad }}</td>
+                                            <td>{{ $estudiante->escuela->nombre ?? 'No asignada' }}</td>
+                                            <td>{{ $estudiante->anio_ingreso }}</td>
                                             <td>
-                                                <span class="badge badge-{{ $docente->estado == 'Activo' ? 'success' : 'danger' }}">
-                                                    {{ $docente->estado }}
+                                                @if($estudiante->persona->roles->count() > 0)
+                                                    @foreach($estudiante->persona->roles as $rol)
+                                                        <span class="badge badge-info">{{ $rol->nombre }}</span>
+                                                    @endforeach
+                                                @else
+                                                    <span class="text-muted">Sin roles</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-{{ $estudiante->estado == 'Activo' ? 'success' : ($estudiante->estado == 'Egresado' ? 'primary' : 'danger') }}">
+                                                    {{ $estudiante->estado }}
                                                 </span>
                                             </td>
                                             <td class="btn-action-group">
-                                                <a href="{{ route('docentes.show', $docente) }}" class="btn btn-link btn-sm p-0 btn-ver-docente" title="Ver">
+                                                <a href="{{ route('estudiantes.show', $estudiante) }}" 
+                                                   class="btn btn-link btn-sm p-0 btn-ver-estudiante" title="Ver">
                                                     <i class="fas fa-eye" style="color: #17a2b8; font-size: 1.2rem;"></i>
                                                 </a>
-                                                <a href="{{ route('docentes.edit', $docente) }}" class="btn btn-link btn-sm p-0 btn-editar-docente" title="Editar">
+                                                <a href="{{ route('estudiantes.edit', $estudiante) }}" 
+                                                   class="btn btn-link btn-sm p-0 btn-editar-estudiante" title="Editar">
                                                     <i class="fas fa-pen" style="color: #007bff; font-size: 1.2rem;"></i>
                                                 </a>
-                                                <button type="button" class="btn btn-link btn-sm p-0 btn-eliminar-docente" title="Eliminar"
-                                                        onclick="confirmarEliminar({{ $docente->id_docente }}, '{{ $docente->persona->nombres }} {{ $docente->persona->apellidos }}')">
-                                                    <i class="fas fa-times" style="color: #dc3545; font-size: 1.3rem;"></i>
-                                                </button>
-                                                <form id="delete-form-{{ $docente->id_docente }}" action="{{ route('docentes.destroy', $docente) }}" method="POST" class="d-none">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                </form>
+                                                @if($estudiante->estado == 'Activo')
+                                                    <button type="button" class="btn btn-link btn-sm p-0 btn-eliminar-estudiante" 
+                                                            title="Dar de Baja"
+                                                            onclick="confirmarEliminar({{ $estudiante->id_estudiante }}, '{{ $estudiante->persona->nombres }} {{ $estudiante->persona->apellidos }}')">
+                                                        <i class="fas fa-times" style="color: #dc3545; font-size: 1.3rem;"></i>
+                                                    </button>
+                                                    <form id="delete-form-{{ $estudiante->id_estudiante }}" 
+                                                          action="{{ route('estudiantes.destroy', $estudiante) }}" 
+                                                          method="POST" class="d-none">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                    </form>
+                                                @endif
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="9" class="text-center">No hay docentes registrados.</td>
+                                            <td colspan="10" class="text-center">No hay estudiantes registrados.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
                             </table>
                         </div>
-                        <div id="tabla-docentes">
-                            {{ $docentes->links() }}
+                        <div id="tabla-estudiantes">
+                            {{ $estudiantes->links() }}
                         </div>
                     </div>
                 </div>
@@ -136,10 +157,10 @@
 <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // Función para confirmar eliminación con SweetAlert2 (global)
-    function confirmarEliminar(docenteId, nombreDocente) {
+    function confirmarEliminar(estudianteId, nombreEstudiante) {
         Swal.fire({
             title: '¿Está seguro?',
-            text: `¿Desea cambiar el estado del docente "${nombreDocente}" a Inactivo?`,
+            text: `¿Desea cambiar el estado del estudiante "${nombreEstudiante}" a Inactivo?`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc3545',
@@ -149,7 +170,7 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 // Enviar el formulario de eliminación
-                const form = document.getElementById(`delete-form-${docenteId}`);
+                const form = document.getElementById(`delete-form-${estudianteId}`);
                 if (form) {
                     form.submit();
                 }
@@ -163,22 +184,8 @@
         if (loader) loader.style.display = 'none';
         if (contenido) contenido.style.opacity = '1';
 
-        // Loader para ir a create (Nuevo Docente)
-        const nuevoRegistroBtn = document.getElementById('nuevoRegistroBtn');
-        if (nuevoRegistroBtn) {
-            nuevoRegistroBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (loader) {
-                    loader.style.display = 'flex';
-                }
-                setTimeout(() => {
-                    window.location.href = this.href;
-                }, 800);
-            });
-        }
-
-        // Loader para ver
-        document.querySelectorAll('.btn-ver-docente').forEach(function(btn) {
+        // Loader para ver estudiante
+        document.querySelectorAll('.btn-ver-estudiante').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 if (loader) {
@@ -190,8 +197,8 @@
             });
         });
 
-        // Loader para editar
-        document.querySelectorAll('.btn-editar-docente').forEach(function(btn) {
+        // Loader para editar estudiante
+        document.querySelectorAll('.btn-editar-estudiante').forEach(function(btn) {
             btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 if (loader) {

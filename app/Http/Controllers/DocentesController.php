@@ -132,19 +132,21 @@ class DocentesController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Docente $docente)
+    public function show($id)
     {
-        $docente->load('persona');
+        $docente = Docente::with('persona')->findOrFail($id);
         return view('cdocentes.show', compact('docente'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Docente $docente)
+    public function edit($id)
     {
-        $docente->load('persona');
-        return view('cdocentes.edit', compact('docente'));
+        $docente = Docente::with('persona', 'especialidades')->findOrFail($id);
+        $especialidades = \App\Models\Especialidad::where('estado', 'Activo')->get();
+     
+        return view('cdocentes.edit', compact('docente', 'especialidades'));
     }
 
     /**
@@ -170,9 +172,10 @@ class DocentesController extends Controller
             'direccion' => 'nullable|string|max:255',
             'fecha_nacimiento' => 'nullable|date|before:today',
             'emailUniversidad' => 'required|string|max:100|unique:docentes,emailUniversidad,' . $docente->id_docente . ',id_docente',
-            'especialidad' => 'nullable|string|max:100',
             'fecha_contratacion' => 'nullable|date',
             'estado' => 'required|in:Activo,Inactivo',
+            'especialidades' => 'required|array|min:1',
+            'especialidades.*' => 'integer|exists:especialidades,id_especialidad',
         ], [
             'nombres.required' => 'El campo nombres es obligatorio.',
             'nombres.regex' => 'El campo nombres solo puede contener letras y espacios.',
@@ -195,10 +198,12 @@ class DocentesController extends Controller
             'fecha_nacimiento.before' => 'La fecha de nacimiento no puede ser futura.',
             'emailUniversidad.required' => 'El email universitario es obligatorio.',
             'emailUniversidad.unique' => 'El email universitario ya está registrado.',
-            'especialidad.max' => 'La especialidad no puede tener más de 100 caracteres.',
             'fecha_contratacion.date' => 'La fecha de contratación debe ser una fecha válida.',
             'estado.required' => 'El estado es obligatorio.',
             'estado.in' => 'El estado debe ser Activo o Inactivo.',
+            'especialidades.required' => 'Debe seleccionar al menos una especialidad.',
+            'especialidades.min' => 'Debe seleccionar al menos una especialidad.',
+            'especialidades.*.exists' => 'Una o más especialidades seleccionadas no son válidas.',
         ]);
 
         if ($validator->fails()) {
@@ -215,10 +220,17 @@ class DocentesController extends Controller
         // Actualizar docente
         $docente->update([
             'emailUniversidad' => $request->emailUniversidad,
-            'especialidad' => $request->especialidad,
             'fecha_contratacion' => $request->fecha_contratacion,
             'estado' => $request->estado,
         ]);
+
+        // Actualizar especialidades
+        $especialidades = $request->especialidades ?? [];
+        $syncData = [];
+        foreach ($especialidades as $especialidadId) {
+            $syncData[$especialidadId] = ['estado' => 'Activo'];
+        }
+        $docente->especialidades()->sync($syncData);
 
         return redirect()->route('docentes.index')
             ->with('success', 'Docente actualizado exitosamente.');
