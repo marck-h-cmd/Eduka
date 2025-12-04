@@ -1,5 +1,5 @@
 @extends('cplantilla.bprincipal')
-@section('titulo', 'Editar Persona')
+@section('titulo', 'Editar docente')
 @section('contenidoplantilla')
     <style>
         /* Estilos optimizados para la vista de edición */
@@ -276,7 +276,7 @@
                         data-toggle="collapse" data-target="#collapseExample0" aria-expanded="true"
                         aria-controls="collapseExample"
                         style="background: #0A8CB3 !important; font-weight: bold; color: white;">
-                        <i class="fas fa-user-edit m-1"></i>&nbsp;Editar Persona: {{ $persona->nombres }} {{ $persona->apellidos }}
+                        <i class="fas fa-user-edit m-1"></i>&nbsp;Editar docente: {{ $docente->nombres }} {{ $docente->apellidos }}
                         <div class="float-right"><i class="fas fa-chevron-down"></i></div>
                     </button>
 
@@ -287,7 +287,7 @@
                                 <i class="fas fa-exclamation-circle fa-2x"></i>
                             </div>
                             <div class="p-2 flex-fill">
-                                <p>En esta sección, puedes editar la información de la persona seleccionada.</p>
+                                <p>En esta sección, puedes editar la información de la docente seleccionada.</p>
                                 <p>Estimado Usuario: Modifica los campos necesarios y verifica que la información sea correcta antes de guardar.</p>
                             </div>
                         </div>
@@ -299,19 +299,280 @@
                             style="background-color: #fcfffc !important">
 
                             <!-- Formulario de edición optimizado -->
-                            <form action="{{ route('personas.update', $persona) }}" method="POST" id="personaForm">
+                            <form action="{{ route('docentes.update', $docente) }}" method="POST" id="personaForm">
                                 @csrf
                                 @method('PUT')
-                                @include('cpersonas._form', ['persona' => $persona, 'roles' => $roles, 'escuelas' => $escuelas, 'especialidades' => $especialidades, 'curriculas' => $curriculas])
+                                
+                                <!-- INFORMACIÓN PERSONAL -->
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <h5 class="mb-3" style="color: #0A8CB3; font-weight: bold;">
+                                            <i class="fas fa-user-circle"></i> Información Personal
+                                        </h5>
+                                    </div>
+                                </div>
 
+                                <!-- Nombres -->
+                                <div class="row form-bordered">
+                                    <div class="col-12 col-md-6">
+                                        <label for="nombres" class="form-label font-weight-bold">
+                                            Nombres <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control @error('nombres') is-invalid @enderror" 
+                                            id="nombres" name="nombres" 
+                                            value="{{ old('nombres', $docente->persona->nombres) }}"
+                                            data-original-value="{{ $docente->persona->nombres }}"
+                                            placeholder="Ingrese los nombres" required>
+                                        <small id="nombresHelp" class="form-text text-muted"></small>
+                                        @error('nombres')
+                                            <span class="invalid-feedback">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Apellidos -->
+                                    <div class="col-12 col-md-6">
+                                        <label for="apellidos" class="form-label font-weight-bold">
+                                            Apellidos <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control @error('apellidos') is-invalid @enderror" 
+                                            id="apellidos" name="apellidos" 
+                                            value="{{ old('apellidos', $docente->persona->apellidos) }}"
+                                            data-original-value="{{ $docente->persona->apellidos }}"
+                                            placeholder="Ingrese los apellidos" required>
+                                        <small id="apellidosHelp" class="form-text text-muted"></small>
+                                        @error('apellidos')
+                                            <span class="invalid-feedback">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <!-- DNI -->
+                                <div class="row form-bordered">
+                                    <div class="col-12 col-md-6">
+                                        <label for="dni" class="form-label font-weight-bold">
+                                            DNI <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control @error('dni') is-invalid @enderror" 
+                                            id="dni" name="dni" 
+                                            value="{{ old('dni', $docente->persona->dni) }}"
+                                            data-original-value="{{ $docente->persona->dni }}"
+                                            placeholder="Ingrese el DNI (8 dígitos)" maxlength="8" required>
+                                        <small id="dniHelp" class="form-text text-muted"></small>
+                                        @error('dni')
+                                            <span class="invalid-feedback">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Teléfono -->
+                                    <div class="col-12 col-md-6">
+                                        <label for="telefono" class="form-label font-weight-bold">
+                                            Teléfono
+                                        </label>
+                                        <input type="text" class="form-control @error('telefono') is-invalid @enderror" 
+                                            id="telefono" name="telefono" 
+                                            value="{{ old('telefono', $docente->persona->telefono) }}"
+                                            data-original-value="{{ $docente->persona->telefono }}"
+                                            placeholder="Ingrese el teléfono (9 dígitos)" maxlength="9">
+                                        <small id="telefonoHelp" class="form-text text-muted"></small>
+                                        @error('telefono')
+                                            <span class="invalid-feedback">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <!-- Email Personal -->
+                                <div class="row form-bordered">
+                                    <div class="col-12 col-md-6">
+                                        <label for="email_username" class="form-label font-weight-bold">
+                                            Email Personal
+                                        </label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control @error('email') is-invalid @enderror" 
+                                                id="email_username" name="email_username" 
+                                                value="{{ old('email_username', explode('@', $docente->persona->email ?? '')[0] ?? '') }}"
+                                                data-original-value="{{ explode('@', $docente->persona->email ?? '')[0] ?? '' }}"
+                                                placeholder="usuario">
+                                            <span class="input-group-text">@</span>
+                                            <input type="text" class="form-control @error('email') is-invalid @enderror" 
+                                                id="email_domain" name="email_domain" 
+                                                value="{{ old('email_domain', explode('@', $docente->persona->email ?? '')[1] ?? '') }}"
+                                                data-original-value="{{ explode('@', $docente->persona->email ?? '')[1] ?? '' }}"
+                                                placeholder="dominio.com">
+                                        </div>
+                                        <small id="emailHelp" class="form-text text-muted"></small>
+                                        @error('email')
+                                            <span class="invalid-feedback d-block">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Género -->
+                                    <div class="col-12 col-md-6">
+                                        <label for="genero" class="form-label font-weight-bold">
+                                            Género
+                                        </label>
+                                        <select class="form-control @error('genero') is-invalid @enderror" 
+                                            id="genero" name="genero"
+                                            data-original-value="{{ $docente->persona->genero }}">
+                                            <option value="">Seleccionar género</option>
+                                            <option value="M" {{ old('genero', $docente->persona->genero) == 'M' ? 'selected' : '' }}>Masculino</option>
+                                            <option value="F" {{ old('genero', $docente->persona->genero) == 'F' ? 'selected' : '' }}>Femenino</option>
+                                            <option value="Otro" {{ old('genero', $docente->persona->genero) == 'Otro' ? 'selected' : '' }}>Otro</option>
+                                        </select>
+                                        <small id="generoHelp" class="form-text text-muted"></small>
+                                        @error('genero')
+                                            <span class="invalid-feedback">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <!-- Fecha de Nacimiento -->
+                                <div class="row form-bordered">
+                                    <div class="col-12 col-md-6">
+                                        <label for="fecha_nacimiento" class="form-label font-weight-bold">
+                                            Fecha de Nacimiento
+                                        </label>
+                                        <input type="date" class="form-control @error('fecha_nacimiento') is-invalid @enderror" 
+                                            id="fecha_nacimiento" name="fecha_nacimiento"
+                                            value="{{ old('fecha_nacimiento', $docente->persona->fecha_nacimiento ? $docente->persona->fecha_nacimiento->format('Y-m-d') : '') }}"
+                                            data-original-value="{{ $docente->persona->fecha_nacimiento ? $docente->persona->fecha_nacimiento->format('Y-m-d') : '' }}">
+                                        <small id="fechaHelp" class="form-text text-muted"></small>
+                                        @error('fecha_nacimiento')
+                                            <span class="invalid-feedback">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Dirección -->
+                                    <div class="col-12 col-md-6">
+                                        <label for="direccion" class="form-label font-weight-bold">
+                                            Dirección
+                                        </label>
+                                        <input type="text" class="form-control @error('direccion') is-invalid @enderror" 
+                                            id="direccion" name="direccion" 
+                                            value="{{ old('direccion', $docente->persona->direccion) }}"
+                                            data-original-value="{{ $docente->persona->direccion }}"
+                                            placeholder="Ingrese la dirección">
+                                        <small id="direccionHelp" class="form-text text-muted"></small>
+                                        @error('direccion')
+                                            <span class="invalid-feedback">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <!-- INFORMACIÓN DE DOCENTE -->
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <h5 class="mb-3" style="color: #0A8CB3; font-weight: bold;">
+                                            <i class="fas fa-chalkboard-user"></i> Información de Docente
+                                        </h5>
+                                    </div>
+                                </div>
+
+                                <!-- Email Universitario -->
+                                <div class="row form-bordered">
+                                    <div class="col-12 col-md-6">
+                                        <label for="emailUniversidad" class="form-label font-weight-bold">
+                                            Email Universitario <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="email" class="form-control @error('emailUniversidad') is-invalid @enderror" 
+                                            id="emailUniversidad" name="emailUniversidad" 
+                                            value="{{ old('emailUniversidad', $docente->emailUniversidad) }}"
+                                            data-original-value="{{ $docente->emailUniversidad }}"
+                                            placeholder="Ingrese el email universitario" required>
+                                        <small id="emailUniversidadHelp" class="form-text text-muted"></small>
+                                        @error('emailUniversidad')
+                                            <span class="invalid-feedback">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Fecha de Contratación -->
+                                    <div class="col-12 col-md-6">
+                                        <label for="fecha_contratacion" class="form-label font-weight-bold">
+                                            Fecha de Contratación
+                                        </label>
+                                        <input type="date" class="form-control @error('fecha_contratacion') is-invalid @enderror" 
+                                            id="fecha_contratacion" name="fecha_contratacion" 
+                                            value="{{ old('fecha_contratacion', $docente->fecha_contratacion ? $docente->fecha_contratacion->format('Y-m-d') : '') }}"
+                                            data-original-value="{{ $docente->fecha_contratacion ? $docente->fecha_contratacion->format('Y-m-d') : '' }}">
+                                        <small id="fecha_contratacionHelp" class="form-text text-muted"></small>
+                                        @error('fecha_contratacion')
+                                            <span class="invalid-feedback">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <!-- Estado -->
+                                <div class="row form-bordered">
+                                    <div class="col-12 col-md-6">
+                                        <label for="estado" class="form-label font-weight-bold">
+                                            Estado <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-control @error('estado') is-invalid @enderror" 
+                                            id="estado" name="estado"
+                                            data-original-value="{{ $docente->estado }}" required>
+                                            <option value="Activo" {{ old('estado', $docente->estado) == 'Activo' ? 'selected' : '' }}>Activo</option>
+                                            <option value="Inactivo" {{ old('estado', $docente->estado) == 'Inactivo' ? 'selected' : '' }}>Inactivo</option>
+                                        </select>
+                                        <small id="estadoHelp" class="form-text text-muted"></small>
+                                        @error('estado')
+                                            <span class="invalid-feedback">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <!-- ESPECIALIDADES -->
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <h5 class="mb-3" style="color: #0A8CB3; font-weight: bold;">
+                                            <i class="fas fa-book"></i> Especialidades
+                                        </h5>
+                                    </div>
+                                </div>
+
+                                <div class="row form-bordered">
+                                    <div class="col-12">
+                                        @php
+                                            $selectedEspecialidades = old('especialidades', $docente->especialidades->pluck('id_especialidad')->toArray());
+                                            $contadorInicial = is_array($selectedEspecialidades) ? count($selectedEspecialidades) : 0;
+                                        @endphp
+                                        <label class="form-label font-weight-bold">
+                                            Especialidades Asignadas <span class="text-danger">*</span>
+                                            <small class="text-muted">(Seleccionadas: <span id="especialidades-seleccionadas">{{ $contadorInicial }}</span>)</small>
+                                        </label>
+                                        <div id="especialidades-container" class="border rounded p-3" style="background-color: #f8f9fa; border: 2px solid #e9ecef !important;">
+                                            @forelse($especialidades as $especialidad)
+                                                <div class="form-check especialidad-item mb-2 p-2" style="background-color: white; border: 1px solid #dee2e6; border-radius: 4px;">
+                                                    <input class="form-check-input especialidad-checkbox" type="checkbox" 
+                                                        id="especialidad_{{ $especialidad->id_especialidad }}" 
+                                                        name="especialidades[]" 
+                                                        value="{{ $especialidad->id_especialidad }}"
+                                                        @if( (is_array($selectedEspecialidades) && in_array($especialidad->id_especialidad, $selectedEspecialidades)) ) checked @endif>
+                                                    <label class="form-check-label" for="especialidad_{{ $especialidad->id_especialidad }}">
+                                                        <i class="fas fa-check-circle text-success mr-2"></i>{{ $especialidad->nombre }}
+                                                        @if($especialidad->descripcion)
+                                                            <small class="text-muted d-block ml-4">{{ $especialidad->descripcion }}</small>
+                                                        @endif
+                                                    </label>
+                                                </div>
+                                            @empty
+                                                <div class="alert alert-info mb-0">
+                                                    <i class="fas fa-info-circle mr-2"></i>No hay especialidades disponibles
+                                                </div>
+                                            @endforelse
+                                        </div>
+                                        <small id="especialidades-error" class="form-text text-danger" style="display: none;">
+                                            Debe seleccionar al menos una especialidad
+                                        </small>
+                                    </div>
+                                </div>
+                               
                                 <!-- Botones de acción -->
                                 <div class="row mt-4">
                                     <div class="col-12 d-flex justify-content-center">
                                         <div style="display: flex; align-items: center; gap: 15px;">
                                             <button type="submit" class="btn btn-primary" style="width: 200px; height: 38px; padding: 6px 12px;">
-                                                <i class="fas fa-save"></i> Actualizar Persona
+                                                <i class="fas fa-save"></i> Actualizar docente
                                             </button>
-                                            <button type="button" onclick="window.location.href='{{ route('personas.index') }}'"
+                                            <button type="button" onclick="window.location.href='{{ route('docentes.index') }}'"
                                                 class="btn btn-secondary" style="width: 120px; height: 38px; padding: 6px 12px;">
                                                 <i class="fas fa-times"></i> Cancelar
                                             </button>
@@ -330,7 +591,7 @@
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         /**
-         * Funciones de validación para formularios de personas
+         * Funciones de validación para formularios de docentes
          */
 
         // Función para inicializar campos de roles
@@ -421,7 +682,7 @@
             var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
             if (email.length === 0) {
-                $('#emailHelp').removeClass('text-success text-danger text-warning').text('');
+                $('#emailHelp').removeClass('text-success text-danger').text('');
                 $('#email_username').removeClass('is-invalid is-valid');
                 $('#email_domain').removeClass('is-invalid is-valid');
                 return;
@@ -441,7 +702,7 @@
 
         // Función global para verificar email
         function verificarEmailGlobal(email) {
-            var personaId = {{ $persona->id_persona }};
+            var personaId = {{ $docente->id_persona }};
             $.ajax({
                 url: '/personas/verificar-email',
                 type: 'GET',
@@ -516,7 +777,7 @@
 
         // Función para verificar unicidad de email universitario
         function verificarEmailUniversitarioUnico(email, tipo, $input, $domainInput) {
-            var personaId = {{ $persona->id_persona }};
+            var personaId = {{ $docente->id_persona }};
             mostrarMensajeErrorRol(tipo, 'Verificando disponibilidad del email...');
 
             $.ajax({
@@ -848,7 +1109,7 @@
 
         // Función para verificar DNI
         function verificarDni(dni) {
-            var personaId = {{ $persona->id_persona }};
+            var personaId = {{ $docente->id_persona }};
             $.ajax({
                 url: '{{ route('personas.verificarDni') }}',
                 type: 'GET',
@@ -871,7 +1132,7 @@
 
         // Función para verificar Email
         function verificarEmail(email) {
-            var personaId = {{ $persona->id_persona }};
+            var personaId = {{ $docente->id_persona }};
             $.ajax({
                 url: '{{ route('personas.verificarEmail') }}',
                 type: 'GET',
@@ -1077,7 +1338,7 @@
                     Swal.fire({
                         icon: 'warning',
                         title: 'Edad insuficiente',
-                        text: 'La persona debe tener al menos 18 años.',
+                        text: 'La docente debe tener al menos 18 años.',
                         confirmButtonColor: '#007bff'
                     });
                     $(this).val('');
@@ -1412,6 +1673,86 @@
             $(document).on('change', '#estudiante_id_escuela', function() {
                 filtrarCurriculasPorEscuela();
             });
+
+            // ------ Inicio: verificación AJAX para emailUniversitario (Docente) ------
+            // Debounce utilitario
+            function debounce(func, wait) {
+                let timeout;
+                return function() {
+                    const context = this, args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(function() {
+                        func.apply(context, args);
+                    }, wait);
+                };
+            }
+
+            // Verificar email universitario para el input #emailUniversidad
+            function verificarEmailUniversitarioInput(forceCheck = false) {
+                var $input = $('#emailUniversidad');
+                var email = $input.val().trim();
+                var $help = $('#emailUniversidadHelp');
+                var personaId = {{ $docente->id_persona }};
+                var url = '{{ route('personas.verificarEmailUniversitario') }}';
+
+                $help.removeClass('text-success text-danger text-warning').text('');
+                $input.removeClass('is-valid is-invalid');
+
+                if (!email) {
+                    return;
+                }
+
+                // Formato básico
+                var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+                if (!emailRegex.test(email)) {
+                    $input.addClass('is-invalid');
+                    $help.addClass('text-danger').text('Formato de email inválido.');
+                    return;
+                }
+
+                // Mostrar verificación
+                $help.removeClass('text-danger text-success').addClass('text-warning').text('Verificando email universitario...');
+                // AJAX
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    data: {
+                        email: email,
+                        tipo: 'docente',
+                        persona_id: personaId
+                    },
+                    success: function(response) {
+                        if (response.existe) {
+                            $input.removeClass('is-valid').addClass('is-invalid');
+                            $help.removeClass('text-success text-warning').addClass('text-danger').text(response.mensaje || 'Email universitario ya registrado.');
+                        } else {
+                            $input.removeClass('is-invalid').addClass('is-valid');
+                            $help.removeClass('text-danger text-warning').addClass('text-success').text(response.mensaje || 'Email universitario disponible.');
+                        }
+                    },
+                    error: function() {
+                        $input.removeClass('is-valid').addClass('is-invalid');
+                        $help.removeClass('text-success text-warning').addClass('text-danger').text('Error al verificar email universitario.');
+                    }
+                });
+            }
+
+            // Binding: usar debounce en input y verificación inmediata en blur
+            $(document).ready(function() {
+                // Eliminar handlers previos si existen
+                $('#emailUniversidad').off('input blur change');
+
+                // Verificación en input (debounced)
+                $('#emailUniversidad').on('input', debounce(function() {
+                    verificarEmailUniversitarioInput();
+                }, 600));
+
+                // Verificación inmediata en blur
+                $('#emailUniversidad').on('blur', function() {
+                    verificarEmailUniversitarioInput(true);
+                });
+            });
+            // ------ Fin: verificación AJAX para emailUniversitario (Docente) ------
         });
     </script>
 @endsection
