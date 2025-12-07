@@ -17,6 +17,7 @@ class RolesSeeder extends Seeder
             ['nombre' => 'Administrador', 'descripcion' => 'Usuario con acceso completo al sistema', 'estado' => 'Activo'],
             ['nombre' => 'Docente', 'descripcion' => 'Profesor del colegio', 'estado' => 'Activo'],
             ['nombre' => 'Estudiante', 'descripcion' => 'Alumno del colegio', 'estado' => 'Activo'],
+            ['nombre' => 'Secretaria', 'descripcion' => 'Secretaria administrativa del colegio', 'estado' => 'Activo'],
             ['nombre' => 'Representante', 'descripcion' => 'Padre o tutor del estudiante', 'estado' => 'Activo'],
         ];
 
