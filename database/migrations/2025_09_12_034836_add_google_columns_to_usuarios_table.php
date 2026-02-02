@@ -12,14 +12,14 @@ return new class extends Migration
   
     public function up()
     {
-        Schema::table('usuarios', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table) {
             $table->string('google_id')->nullable()->unique();
             $table->string('google_token')->nullable();
         });
     }
     public function down()
     {
-        Schema::table('usuarios', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table) {
             $table->dropColumn(['google_id', 'google_token']);
         });
     }
